@@ -28,6 +28,7 @@ I would ask that we do the following however:
   
 **Watdo**
 
+Setup your repo:
 ```shell
 mkdir prototype
 cd !$
@@ -35,7 +36,11 @@ git clone git@github.com:SmallFundamentals/sparse-connectivity-prototype.git .
 ```
 
 [Run through this](https://help.github.com/articles/error-permission-denied-publickey/) if you get permission denied.
-  
-  
-  
-  
+
+Before you push your commit:
+```shell
+git fetch
+git rebase -i origin/master
+<fix any conflicts>
+git push
+```
