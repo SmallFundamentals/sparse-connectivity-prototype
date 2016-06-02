@@ -17,7 +17,7 @@ I would ask that we do the following however:
 
   We're not going to have a build process, and we're not doing PRs, so it'll be hard to track down stuff if they break, so let's try to keep them not broken.
   
-  As a general rule of them, try to make things no more broken than before you pushed. 
+  As a general rule of thumb, try to make things no more broken than before you pushed. 
   
   Regression is bad.
   
@@ -25,7 +25,16 @@ I would ask that we do the following however:
 
   Self-explanatory. Try not to do things that would get you yelled if you did it at work.
   
-to be continued when Blake comes back from dinner...
+  
+**Watdo**
+
+```shell
+mkdir prototype
+cd !$
+git clone git@github.com:SmallFundamentals/sparse-connectivity-prototype.git .
+```
+
+[Run through this](https://help.github.com/articles/error-permission-denied-publickey/) if you get permission denied.
   
   
   
