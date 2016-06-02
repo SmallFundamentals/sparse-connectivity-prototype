@@ -1,0 +1,12 @@
+These are some of the stuff that I skimmed when I started researching this last term. 
+I myself need to read over most of these again, since it's been so long, but they're pretty useful and decently easy to read.
+If we're committing to this solution (for now at least), I hope by the end each of us has at least a good enough high-level understanding of how it works and be able to explain it decently to somebody else.
+You don't have to read these immediately, but they're here so you don't have to do the searching yourself.
+
+Feel free to add stuff as you see fit.
+
+https://rsync.samba.org/tech_report/
+https://en.wikipedia.org/wiki/Rsync#Algorithm
+http://www.cs.cmu.edu/~15-749/READINGS/required/cas/tridgell96.pdf
+http://stackoverflow.com/questions/2557927/how-does-the-rsync-algorithm-correctly-identify-repeating-blocks
+http://tutorials.jenkov.com/rsync/checksums.html
