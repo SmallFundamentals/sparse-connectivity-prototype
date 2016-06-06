@@ -2,7 +2,10 @@ import struct
 import hashlib
 
 
-def adler_32(block):
+def adler_32(block, block_number):
+    filename = 'adler_%d_python' % block_number
+    out = open(filename,'w')
+
     large_prime = 65521
     block_size = len(block)
     # https://docs.python.org/2/library/struct.html#format-characters
@@ -11,13 +14,14 @@ def adler_32(block):
     a = 0
     b = 0
     for i in range(block_size):
-        print data[i]
+        out.write("%s %s\n" % (a, b))
         a += data[i]
         b += (block_size - i) * data[i]
-
+    #print "BEFORE MOD %s %s" % (a, b)
     a = a % large_prime
     b = b % large_prime
-    return a + (b * 2**16)
+    print "AFTER MOD %s %s" % (a, b)
+    return a + (b * (2**16))
 
 
 def md5(block):
@@ -28,19 +32,27 @@ def md5(block):
 def main():
     BLOCK_SIZE = 1024 #Bytes
 
-    with open('img.jpeg', 'rb') as f:
+    with open('sm_img.jpeg', 'rb') as f:
         rolling_wf = open('rolling_checksum','w')
         md5_wf = open('md5_checksum','w')
+        raw_wf = open('raw_bytefile','w')
 
         byte = f.read(BLOCK_SIZE)
+        count = 0
         while byte != "":
-            rolling_checksum = adler_32(byte)
+            rolling_checksum = adler_32(byte, count)
+            count += 1
             md5_checksum = md5(byte)
 
             rolling_wf.write(str(rolling_checksum) + "\n")
-            md5_wf.write(md5_checksum+ "\n")
+            md5_wf.write(md5_checksum + "\n")
+
+            data = struct.unpack("b" * len(byte), byte)
+            for i in range(len(byte)):
+                raw_wf.write(str(data[i]))
 
             byte = f.read(BLOCK_SIZE)
+
 
 
 main()
