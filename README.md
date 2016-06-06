@@ -37,6 +37,16 @@ git clone git@github.com:SmallFundamentals/sparse-connectivity-prototype.git .
 
 [Run through this](https://help.github.com/articles/error-permission-denied-publickey/) if you get permission denied.
 
+Install Apache Commons:
+- Download binaries and extract jar file (e.g. commons-codec-1.10.jar)
+- Move jar files to /Library/Java/Extensions/
+
+To run:
+```shell
+make server (this runs the python code directly)
+make client (this compiles all the Java files for the package and then runs it)
+```
+
 Before you push your commit:
 ```shell
 git fetch
