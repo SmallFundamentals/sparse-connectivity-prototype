@@ -1,3 +1,5 @@
+package client_uploader;
+
 import java.io.*;
 import java.lang.Math;
 import java.util.*;
@@ -11,13 +13,8 @@ class ClientUploader {
 	public final static String UPLOAD_FILENAME = "sm_img.jpeg";
 	public final static int BLOCK_SIZE = 1024;
 
-	// To be encapsulated in a class
-	// public static long a = 0;
-	// public static long b = 0;
-
 	public static void main(String[] args) throws IOException{
 		Path path = FileSystems.getDefault().getPath(UPLOAD_FILENAME);
-		// FileOutputStream fos = new FileOutputStream("raw_bytefile_java");
 		PrintWriter fos = new PrintWriter("rolling_checksum_java", "UTF-8");
 		BufferedInputStream dataStream;
 		try {
@@ -29,22 +26,22 @@ class ClientUploader {
 
 		// Supposedly Rolling checksums received from client, each integer is one checksum for a block
 		// Here we define consistently such that a block is 1024 bytes
-		List<Long> getRollingChecksumList = getRollingChecksumList();
+		List<Long> rollingChecksums = getRollingChecksumList();
 
 		// Begin rolling checksum process
 		int currentIndex = 0;
 		byte[] b = new byte[BLOCK_SIZE];
-
 		int bytesRead;
-		int count = 0;
+
+		Adler32 adler = new Adler32();
+
 		while ((bytesRead = dataStream.read(b)) != -1) {
-			long hash = adler32(b, bytesRead, count++);
+			long hash = adler.calc(b, bytesRead);
 			fos.write(String.valueOf(hash) + "\n");
-			// System.out.println(hash);
 		}
-		fos.close();
-		return;
+
 		/*
+		for (long serverChecksum : rollingChecksums) {
 			while (localRollingChecksum != serverChecksum && result != -1) {
 				System.out.println("Block mismatch... " + localRollingChecksum + " vs. " + serverChecksum);
 				System.out.println("Incrementing local block by 1");
@@ -59,52 +56,7 @@ class ClientUploader {
 			}
 		}
 		*/
-		// String string = new String(byte[] bytes, Charset charset);
-	}
-
-	private static long adler32(byte[] block, int block_size, int block_number) throws FileNotFoundException, UnsupportedEncodingException {
-		String filename = "adler_" + block_number + "_java";
-		PrintWriter fos = new PrintWriter(filename, "UTF-8");
-
-		int largePrime = 65521;
-		long a = 0;
-		long b = 0;
-		for (int i = 0; i < block_size; i++) {
-			String output = String.format("%d %d\n", a, b);
-			fos.write(output);
-			a += (long) block[i];
-			b += (block_size - i) * (long) block[i];
-		}
 		fos.close();
-		//System.out.println(String.format("BEFORE MOD %d %d", a, b));
-		a = Math.floorMod(a, largePrime);
-		b = Math.floorMod(b, largePrime);
-
-		System.out.println(String.format("AFTER MOD %d %d", a, b));
-
-		return (long)(a + (b * Math.pow(2, 16)));
-	}
-
-	private static int getByteFromBufferedIStream(BufferedInputStream stream, byte[] b, int skip) {
-		int result = -1;
-		int available = -1;
-		try {
-			available = stream.available();
-			if (skip == 0) {
-				result = stream.read(b);
-			} else {
-				byte[] skippedBytes = new byte[skip];
-				stream.read(skippedBytes);
-				result = stream.read(b);
-			}
-
-		} catch (IOException e) {
-			System.out.println(e);
-		} catch (IndexOutOfBoundsException e) {
-			System.out.println(e);
-			System.out.println(available);
-		}
-		return result;
 	}
 
 	private static List<Long> getRollingChecksumList() {
