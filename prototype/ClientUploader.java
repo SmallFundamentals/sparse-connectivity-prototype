@@ -2,9 +2,13 @@ package client_uploader;
 
 import java.io.*;
 import java.lang.Math;
-import java.util.*;
 import java.nio.Buffer;
 import java.nio.file.*;
+import java.security.*;
+import java.util.*;
+
+// http://commons.apache.org/proper/commons-codec/download_codec.cgi
+import org.apache.commons.codec.binary.Hex;
 
 class ClientUploader {
 
@@ -13,9 +17,10 @@ class ClientUploader {
 	public final static String UPLOAD_FILENAME = "sm_img.jpeg";
 	public final static int BLOCK_SIZE = 1024;
 
-	public static void main(String[] args) throws IOException{
+	public static void main(String[] args) throws FileNotFoundException, IOException, NoSuchAlgorithmException, DigestException {
 		Path path = FileSystems.getDefault().getPath(UPLOAD_FILENAME);
 		PrintWriter fos = new PrintWriter("rolling_checksum_java", "UTF-8");
+		PrintWriter mdfos = new PrintWriter("md5_checksum_java", "UTF-8");
 		BufferedInputStream dataStream;
 		try {
 			dataStream = new BufferedInputStream(new FileInputStream(UPLOAD_FILENAME));
@@ -34,10 +39,15 @@ class ClientUploader {
 		int bytesRead;
 
 		Adler32 adler = new Adler32();
+		MessageDigest md = MessageDigest.getInstance("MD5");
 
 		while ((bytesRead = dataStream.read(b)) != -1) {
 			long hash = adler.calc(b, bytesRead);
+			md.update(b, 0, bytesRead);
+			byte[] md5 = md.digest();
 			fos.write(String.valueOf(hash) + "\n");
+			mdfos.write(Hex.encodeHexString(md5) + "\n");
+			md.reset();
 		}
 
 		/*
@@ -57,6 +67,7 @@ class ClientUploader {
 		}
 		*/
 		fos.close();
+		mdfos.close();
 	}
 
 	private static List<Long> getRollingChecksumList() {
