@@ -14,13 +14,13 @@ class ClientUploader {
 
 	public final static String MD5_CHECKSUM_FILENAME = "md5_checksum";
 	public final static String ROLLING_CHECKSUM_FILENAME = "rolling_checksum";
-	public final static String UPLOAD_FILENAME = "sm_img.jpeg";
+	public final static String UPLOAD_FILENAME = "../../assets/sm_img.jpeg";
 	public final static int BLOCK_SIZE = 1024;
 
 	public static void main(String[] args) throws FileNotFoundException, IOException, NoSuchAlgorithmException, DigestException {
 		Path path = FileSystems.getDefault().getPath(UPLOAD_FILENAME);
-		PrintWriter fos = new PrintWriter("rolling_checksum_java", "UTF-8");
-		PrintWriter mdfos = new PrintWriter("md5_checksum_java", "UTF-8");
+		PrintWriter fos = new PrintWriter("java_rolling.sum", "UTF-8");
+		PrintWriter mdfos = new PrintWriter("java_md5.sum", "UTF-8");
 		BufferedInputStream dataStream;
 		try {
 			dataStream = new BufferedInputStream(new FileInputStream(UPLOAD_FILENAME));
@@ -31,7 +31,7 @@ class ClientUploader {
 
 		// Supposedly Rolling checksums received from client, each integer is one checksum for a block
 		// Here we define consistently such that a block is 1024 bytes
-		List<Long> rollingChecksums = getRollingChecksumList();
+		// List<Long> rollingChecksums = getRollingChecksumList();
 
 		// Begin rolling checksum process
 		int currentIndex = 0;
@@ -68,6 +68,7 @@ class ClientUploader {
 		*/
 		fos.close();
 		mdfos.close();
+		System.out.println("Success!");
 	}
 
 	private static List<Long> getRollingChecksumList() {

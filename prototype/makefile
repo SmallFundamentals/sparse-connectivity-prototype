@@ -1,7 +1,19 @@
-server:
-	python remote.py
+PY_DIR = src/py
+JAVA_DIR = src/java
 
-client:
-	javac -d . Adler32.java
-	javac -d . ClientUploader.java
-	java client_uploader/ClientUploader
+all:
+	make py
+	make java
+	
+py:
+	@echo Making Python...
+	cd $(PY_DIR); make
+
+java:
+	@echo Making Java...
+	cd $(JAVA_DIR); make
+
+clean:
+	cd $(PY_DIR); make clean
+	cd $(JAVA_DIR); make clean
+	$(RM) *.sum

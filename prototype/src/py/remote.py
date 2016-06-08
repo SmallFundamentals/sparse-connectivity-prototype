@@ -1,6 +1,6 @@
 import struct
 import hashlib
-
+import os
 
 def adler_32(block):
     large_prime = 65521
@@ -25,10 +25,11 @@ def md5(block):
 
 def main():
     BLOCK_SIZE = 1024 #Bytes
+    IMAGE_PATH = os.path.join(os.path.dirname(__file__), '../../assets/sm_img.jpeg')
 
-    with open('sm_img.jpeg', 'rb') as f:
-        rolling_wf = open('rolling_checksum','w')
-        md5_wf = open('md5_checksum','w')
+    with open(IMAGE_PATH, 'rb') as f:
+        rolling_wf = open('py_rolling.sum','w')
+        md5_wf = open('py_md5.sum','w')
 
         byte = f.read(BLOCK_SIZE)
         while byte != "":
