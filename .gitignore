@@ -1,5 +1,5 @@
 .DS_Store
-*checksum
+*.sum
 *.class
 
 # Byte-compiled / optimized / DLL files
