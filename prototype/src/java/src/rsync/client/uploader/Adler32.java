@@ -37,30 +37,45 @@ public class Adler32 {
             a += (long) block[i];
             b += (blockSize - i) * (long) block[i];
         }
+
+
         // https://en.wikipedia.org/wiki/Modulo_operation
         // Java's Math.floorMod == Python's %
         a = Math.floorMod(a, this.MOD_ADLER);
         b = Math.floorMod(b, this.MOD_ADLER);
-        result = this.get_checksum(a, b);
 
-        // a and b can be re-used to calculate next checksum in a rolling fashion
-        Map.Entry<Long, Long> value = new AbstractMap.SimpleEntry<>(a, b);
-        this.ABmap.put(result, value);
+        result = this.getChecksum(a, b);
+
+        this.cacheIntermediateValues(a, b, result);
+
         return result;
     }
 
     public long calc(long adler32Value, int blockSize, byte firstByte, byte nextByte) {
         Map.Entry<Long, Long> pair = this.ABmap.get(adler32Value);
+        long result;
         long a = pair.getKey();
         long b = pair.getValue();
+
         a -= (long) firstByte;
         a += (long) nextByte;
         b -= blockSize * (long) firstByte;
         b += a;
-        return this.get_checksum(a, b);
+
+        a = Math.floorMod(a, this.MOD_ADLER);
+        b = Math.floorMod(b, this.MOD_ADLER);
+        result = this.getChecksum(a, b);
+
+        this.cacheIntermediateValues(a, b, result);
+        return result;
     }
 
-    private long get_checksum(long a, long b) {
+    private long getChecksum(long a, long b) {
         return (long) (a + (b * Math.pow(2, 16)));
+    }
+
+    private void cacheIntermediateValues(long a, long b, long checksum) {
+        Map.Entry<Long, Long> value = new AbstractMap.SimpleEntry<>(a, b);
+        this.ABmap.put(checksum, value);
     }
 }
