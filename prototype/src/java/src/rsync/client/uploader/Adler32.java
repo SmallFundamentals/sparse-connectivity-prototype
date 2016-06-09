@@ -1,6 +1,5 @@
 package rsync.client.uploader;
 
-
 import java.util.*;
 
 /**
@@ -11,19 +10,16 @@ import java.util.*;
  */
 public class Adler32 {
 
-    // Large prime number used for Adler-32 calcuation
+    // Large prime number used for Adler-32 calculation
     private final int MOD_ADLER = 65521;
     private HashMap<Long, Map.Entry<Long, Long>> ABmap;
 
     public Adler32() {
-        this.ABmap = new HashMap<Long, Map.Entry<Long, Long>>();
+        this.ABmap = new HashMap<>();
     }
 
     /**
      * Calculates the Adler32 checksum for a given block of data.
-     *
-     * The intermediate values are stored in a HashMap for rolling calculations,
-     * accessible using the checksum produced.
      *
      * @param block         the block of data to calculate the checksum for
      * @param blockSize     the size of the data block (can be less than block.length)
@@ -38,42 +34,72 @@ public class Adler32 {
             b += (blockSize - i) * (long) block[i];
         }
 
-
         // https://en.wikipedia.org/wiki/Modulo_operation
         // Java's Math.floorMod == Python's %
         a = Math.floorMod(a, this.MOD_ADLER);
         b = Math.floorMod(b, this.MOD_ADLER);
 
-        result = this.getChecksum(a, b);
-
+        result = this.getChecksumForIntermediateValues(a, b);
         this.cacheIntermediateValues(a, b, result);
-
         return result;
     }
 
-    public long calc(long adler32Value, int blockSize, byte firstByte, byte nextByte) {
+    /**
+     * Calculates the Adler32 checksum in a rolling fashion given a previous result and the next byte.
+     *
+     * e.g. for byte[] b = {1, 2, 3, ..., 1024, 1025, ...}
+     *
+     * If we have a previous result calculated using b[1:1024], we can find the result of [2:1025] through
+     * this method using the previous result.
+     *
+     * At least 1 call of calc(byte[], int) must be made prior to calling this function.
+     *
+     * @param adler32Value          a Adler32 checksum previously calculated
+     * @param blockSize             the size of the data block used for this and the previous calculation
+     * @param previousFirstByte     the first byte from the previous calculation
+     * @param nextByte              the next byte of data
+     * @return                      a long representation of the Adler32 checksum for the data block
+     */
+    public long calc(long adler32Value, int blockSize, byte previousFirstByte, byte nextByte) {
         Map.Entry<Long, Long> pair = this.ABmap.get(adler32Value);
         long result;
         long a = pair.getKey();
         long b = pair.getValue();
 
-        a -= (long) firstByte;
+        // https://rsync.samba.org/tech_report/node3.html
+        a -= (long) previousFirstByte;
         a += (long) nextByte;
-        b -= blockSize * (long) firstByte;
+        b -= blockSize * (long) previousFirstByte;
         b += a;
 
         a = Math.floorMod(a, this.MOD_ADLER);
         b = Math.floorMod(b, this.MOD_ADLER);
-        result = this.getChecksum(a, b);
-
+        result = this.getChecksumForIntermediateValues(a, b);
         this.cacheIntermediateValues(a, b, result);
         return result;
     }
 
-    private long getChecksum(long a, long b) {
+    /**
+     * Given intermediate values a & b for Adler-32 calculation, return the final checksum.
+     *
+     * @param a     one of two intermediate values from the checksum calculation process
+     * @param b     one of two intermediate values from the checksum calculation process
+     * @return      the calculated Adler-32 checksum
+     */
+    private long getChecksumForIntermediateValues(long a, long b) {
         return (long) (a + (b * Math.pow(2, 16)));
     }
 
+    /**
+     * Store the intermediate values in a HashMap, using the resulting checksum as the key.
+     *
+     * This is useful for calculating the rolling checksum, which allows us to use the intermediate
+     * values to quickly calculate the checksum for an overlapping, subsequent block of data.
+     *
+     * @param a             one of two intermediate values from the checksum calculation process
+     * @param b             one of two intermediate values from the checksum calculation process
+     * @param checksum      the resulting checksum from a & b
+     */
     private void cacheIntermediateValues(long a, long b, long checksum) {
         Map.Entry<Long, Long> value = new AbstractMap.SimpleEntry<>(a, b);
         this.ABmap.put(checksum, value);

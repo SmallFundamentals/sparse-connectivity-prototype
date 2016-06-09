@@ -80,6 +80,9 @@ public class Main {
         // In actual implementation, this should be obtained from the response of initial request to server
         //   instead of read from a file.
 
+        // Appears that the size of the block used to calculate the checksum should also be given,
+        //   since a chunk of data is unlikely to divide evenly by our block size.
+
         List<Long> rollingChecksums = new ArrayList<Long>();
 
         try (BufferedReader br = new BufferedReader(new FileReader(new File(ROLLING_CHECKSUM_FILENAME)))) {
