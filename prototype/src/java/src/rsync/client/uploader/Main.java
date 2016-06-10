@@ -1,9 +1,6 @@
 package rsync.client.uploader;
 
 import java.io.*;
-import java.lang.Math;
-import java.nio.Buffer;
-import java.nio.file.*;
 import java.security.*;
 import java.util.*;
 
@@ -17,8 +14,7 @@ public class Main {
     public final static String UPLOAD_FILENAME = "../../assets/sm_img.jpeg";
     public final static int BLOCK_SIZE = 1024;
 
-    public static void main(String[] args) throws FileNotFoundException, IOException, NoSuchAlgorithmException, DigestException {
-        Path path = FileSystems.getDefault().getPath(UPLOAD_FILENAME);
+    public static void main(String[] args) throws IOException, NoSuchAlgorithmException, DigestException {
         PrintWriter fos = new PrintWriter("java_rolling.sum", "UTF-8");
         PrintWriter mdfos = new PrintWriter("java_md5.sum", "UTF-8");
         BufferedInputStream dataStream;

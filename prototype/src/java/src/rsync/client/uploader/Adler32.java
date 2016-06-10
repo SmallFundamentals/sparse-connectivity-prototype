@@ -12,7 +12,7 @@ public class Adler32 {
 
     // Large prime number used for Adler-32 calculation
     private final int MOD_ADLER = 65521;
-    private HashMap<Long, Map.Entry<Long, Long>> ABmap;
+    private final HashMap<Long, Map.Entry<Long, Long>> ABmap;
 
     public Adler32() {
         this.ABmap = new HashMap<>();
@@ -22,16 +22,16 @@ public class Adler32 {
      * Calculates the Adler32 checksum for a given block of data.
      *
      * @param block         the block of data to calculate the checksum for
-     * @param blockSize     the size of the data block (can be less than block.length)
+     * @param len           the length of the data block to calculate on (can be less than block.length)
      * @return              a long representation of the Adler32 checksum for the data block
      */
-    public long calc(byte[] block, int blockSize) {
+    public long calc(byte[] block, int len) {
         long result;
         long a = 0;
         long b = 0;
-        for (int i = 0; i < blockSize; i++) {
+        for (int i = 0; i < len; i++) {
             a += (long) block[i];
-            b += (blockSize - i) * (long) block[i];
+            b += (len - i) * (long) block[i];
         }
 
         // https://en.wikipedia.org/wiki/Modulo_operation
@@ -55,12 +55,12 @@ public class Adler32 {
      * At least 1 call of calc(byte[], int) must be made prior to calling this function.
      *
      * @param adler32Value          a Adler32 checksum previously calculated
-     * @param blockSize             the size of the data block used for this and the previous calculation
+     * @param len                   the length of the data block used for this and the previous calculation
      * @param previousFirstByte     the first byte from the previous calculation
      * @param nextByte              the next byte of data
      * @return                      a long representation of the Adler32 checksum for the data block
      */
-    public long calc(long adler32Value, int blockSize, byte previousFirstByte, byte nextByte) {
+    public long calc(long adler32Value, int len, byte previousFirstByte, byte nextByte) {
         Map.Entry<Long, Long> pair = this.ABmap.get(adler32Value);
         long result;
         long a = pair.getKey();
@@ -69,7 +69,7 @@ public class Adler32 {
         // https://rsync.samba.org/tech_report/node3.html
         a -= (long) previousFirstByte;
         a += (long) nextByte;
-        b -= blockSize * (long) previousFirstByte;
+        b -= len * (long) previousFirstByte;
         b += a;
 
         a = Math.floorMod(a, this.MOD_ADLER);
