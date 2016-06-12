@@ -41,11 +41,20 @@ Install Apache Commons:
 - Download binaries and extract jar file (e.g. commons-codec-1.10.jar)
 - Move jar files to /Library/Java/Extensions/
 
+Install virtualenv and packages:
+- [Follow this](http://flask.pocoo.org/docs/0.11/installation/)
+- `pip install -r requirements.txt` installs all packages required for running the server. This must be done while the environment is activated. 
+- DO NOT run `pip install Flask`, this is done by the above command
+- DO NOT push the folder `venv` created by the above command
+
 To run:
 ```shell
 make server (this runs the python code directly)
 make client (this compiles all the Java files for the package and then runs it)
+
+python app.py (this runs the Flask server)
 ```
+
 
 Before you push your commit:
 ```shell
