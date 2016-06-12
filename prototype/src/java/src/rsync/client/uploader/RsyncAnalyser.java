@@ -29,7 +29,8 @@ public class RsyncAnalyser {
      * @param remoteMD5Chksms          a List of MD5 checksums calculated for the remote file
      * @param blockSizes               the size of the data block for each checksum, in corresponding order
      */
-    public Object generate(List<Long> remoteRollingChksms, List<String> remoteMD5Chksms, List<Integer> blockSizes) {
+    public Object generate(List<Long> remoteRollingChksms, List<String> remoteMD5Chksms, int[] blockSizes)
+            throws IOException {
         // TODO: Have a list of tuples for the two checksums instead of two lists.
         // TODO: Differentiate between different types of errors
         // TODO: Is it better to simplify blockSizes such that it's only a tuple of (defaultSize: lastBlockSize)?
@@ -43,27 +44,75 @@ public class RsyncAnalyser {
             return null;
         }
 
+        int blockSize = blockSizes[0];
+
         // Preprocess remote rolling checksums for faster lookup
         HashMap<Long, Integer> remoteRollingMap = this.preprocessRemoteRollingChecksums(remoteRollingChksms);
 
-        // For each local checksum (at every offset), check to see if it is present in the map.
         // If it is, check MD5. Skip by $(defaultBlockSize) and write its index to the instructions
             // For everything between it and its previous ending, write those bytes to the instructions
             // If rolling matches but MD5 doesn't, we assume it's a coincidence and move on?
         // If it's not, go to next byte and repeat.
 
-        // When we finish all blocks of size $(defaultBlockSize), do we look at blocks of lesser sizes, since
-        // it's possible that there's a dangling block on remote file?
-        // Self answer: No. If our local checking ends with less than a block left, we simply
-        // send all those bytes over?
-        // Could be made more efficient, but not very likely that there's a dangling block at the end...
-            // Once the end is reached, or there's not enough for a block, we can use incrementally smaller sizes
-            // starting from the end and repeat until a block size of 0 is reached.
+        byte[] fullBlock = new byte[blockSize];
+        byte[] b = new byte[1];
+        int bytesRead;
+        int i = 0;
+        int lastBlockEnd = -1;
+        byte previousFirstByte = 0;
+        long rollingChecksum = 0;
+        // For each local checksum (at every offset), check to see if it is present in the map.
+        while (dataStream.available() > 0) {
+            assert i > lastBlockEnd;
+            // A previous calculation is available to do rolling checksum calculation on
+            if ((i - lastBlockEnd > 1) && (rollingChecksum != 0)) {
+                // Read 1 additional byte and do rolling checksum calculation
+                bytesRead = this.dataStream.read(b);
+                assert bytesRead == 1;
+                rollingChecksum = adler.calc(rollingChecksum, blockSize, previousFirstByte, b[0]);
+            }
+            // Start a new block for calculation.
+            else {
+                // Do full block read
+                bytesRead = this.dataStream.read(fullBlock);
+                if (bytesRead < blockSize) {
+                    // If we read less than a full block but there's still data left, something unexpected is wrong.
+                    assert dataStream.available() == 0;
+                    // TODO: Write entire block to instructions
+                    break;
+                }
+                rollingChecksum = adler.calc(fullBlock, blockSize);
+            }
+
+            Integer remoteIDX = remoteRollingMap.get(rollingChecksum);
+
+            // Local block found in remote hashes
+            if (remoteIDX != null) {
+                // Validate MD5 checksum.
+                if (remoteMD5Chksms.get(remoteIDX) == this.getMD5HashString(fullBlock, blockSize)) {
+                    // TODO: Write bytes before and remote index of block to instructions
+                    // TODO: Convert remoteRollingMap to <Long, List<Integer>> instead
+                    // Prevent duplicate matches to same block
+                    // If this scenario is actually valid, then the map would only create 1 entry for the colliding hashes
+
+                    // Increment counters and go onto next iteration
+                    lastBlockEnd = i + blockSize;
+                    i += blockSize;
+                    continue;
+                }
+                // MD5 doesn't match; we assume it's a coincidence
+            }
+
+            // Local block not found. Increment counters and continue
+            i++;
+            previousFirstByte = fullBlock[0];
+        }
+        return null;
     }
 
-    private boolean checkBlockSizes(List<Integer> blockSizes) {
-        for (int i = 1; i < blockSizes.size(); i++) {
-            if ((blockSizes.get(i) != blockSizes.get(i-1)) && (i != blockSizes.size() - 1)) {
+    private boolean checkBlockSizes(int[] blockSizes) {
+        for (int i = 1; i < blockSizes.length; i++) {
+            if ((blockSizes[i] != blockSizes[i-1]) && (i != blockSizes.length - 1)) {
                 return false;
             }
         }
@@ -83,36 +132,6 @@ public class RsyncAnalyser {
         }
         return ret;
     }
-
-    /*
-    THIS IS WRONG. KEEPING SO THAT I CAN REUSE CODE LATER.
-
-    private HashMap<Long, Integer> preprocessLocalRollingChecksums(int blockSize) throws IOException {
-        // Public methods should check this before calling helper
-        assert dataStream != null;
-
-        HashMap<Long, Integer> ret = new HashMap<>();
-        byte[] firstBlock = new byte[blockSize];
-        byte[] b = new byte[1];
-
-        // Local file should not have less than a single block of data.
-        if (dataStream.read(firstBlock) < blockSize) {
-            // TODO: Throw an exception here
-            return null;
-        }
-
-        int i = 0;
-        byte previousFirstByte = firstBlock[0];
-        long rollingChecksum = adler.calc(firstBlock, blockSize);
-        ret.put(rollingChecksum, i++);
-        while (dataStream.read(b) == 1) {
-            rollingChecksum = adler.calc(rollingChecksum, blockSize, previousFirstByte, b[0]);
-            previousFirstByte = b[0];
-            ret.put(rollingChecksum, i++);
-        }
-        return ret;
-    }
-    */
 
     /**
      * Given a block of data, return a String representation of its MD5 checksum.
