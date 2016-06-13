@@ -58,27 +58,37 @@ public class RsyncAnalyser {
         byte previousFirstByte = 0;
         long rollingChecksum = 0;
 
+        // Entire instructions set, unfragmented
         List<Byte> instructions = new ArrayList<>();
+        // A buffer for holding bytes until it is ready to be written/sent
+        // TODO: This is not really useful right now, but could be useful if we use a generator approach in the future
         List<Byte> instrBuffer = new ArrayList<>();
+        // Keep track of intermediate bytes between found blocks, since it could be more than one $(blockSize)
+        List<Byte> blockBuffer = null;
 
         // For each local checksum (at every offset), check to see if it is present in the map.
         while (dataStream.available() > 0) {
             assert i > lastBlockEnd;
             // A previous calculation is available to do rolling checksum calculation on
             if ((i - lastBlockEnd > 1) && (rollingChecksum != 0)) {
+                System.out.println("ROLL");
                 // Read 1 additional byte and do rolling checksum calculation
                 bytesRead = this.dataStream.read(b);
                 assert bytesRead == 1;
+                previousFirstByte = blockBuffer.remove(0);
                 rollingChecksum = adler.calc(rollingChecksum, defaultBlockSize, previousFirstByte, b[0]);
+                blockBuffer.add(b[0]);
             }
             // Start a new block for calculation.
             else {
+                System.out.println("FIRST");
                 // Do full block read
                 bytesRead = this.dataStream.read(fullBlock);
                 if (bytesRead < defaultBlockSize) {
                     // If we read less than a full block but there's still data left, something unexpected is wrong.
                     assert dataStream.available() == 0;
                     // Write all remaining bytes to instructions and update counters
+                    System.out.println("NOT NORMAL");
                     instructions.add(SEQUENCE_DELIMITER);
                     for (byte nextByte : fullBlock) {
                         instructions.add(nextByte);
@@ -88,6 +98,7 @@ public class RsyncAnalyser {
                     break;
                 }
                 rollingChecksum = adler.calc(fullBlock, defaultBlockSize);
+                blockBuffer = new ArrayList<>(Arrays.asList(this.toByteObjArray(fullBlock)));
             }
 
             Integer remoteIDX = remoteRollingMap.get(rollingChecksum);
@@ -97,6 +108,7 @@ public class RsyncAnalyser {
                 // Validate MD5 checksum.
                 if (remoteMD5Chksms.get(remoteIDX) == this.getMD5HashString(fullBlock, defaultBlockSize)) {
                     if (instrBuffer.size() > 0) {
+                        System.out.println("NORMAL");
                         instructions.add(SEQUENCE_DELIMITER);
                         instructions.addAll(instrBuffer);
                         instructions.add(SEQUENCE_DELIMITER);
@@ -108,17 +120,20 @@ public class RsyncAnalyser {
                     // If this scenario is actually valid, then the map would only create 1 entry for the colliding hashes
 
                     // Increment counters and go onto next iteration
-                    lastBlockEnd = i + defaultBlockSize;
-                    i += defaultBlockSize;
+                    lastBlockEnd = -1;
+                    i = 0;
+                    blockBuffer = null;
                     continue;
                 }
                 // MD5 doesn't match; we assume it's a coincidence
             }
 
             // Local block not found. Store byte in buffer, increment counters
-            previousFirstByte = fullBlock[0];
-            instrBuffer.add(previousFirstByte);
+            if (blockBuffer.size() > 0) {
+                instrBuffer.add(blockBuffer.get(0));
+            }
             i++;
+            System.out.println(i);
         }
 
         // Clear buffer one last time
@@ -157,5 +172,19 @@ public class RsyncAnalyser {
         this.md.update(block, 0, len);
         byte[] md5 = md.digest();
         return Hex.encodeHexString(md5);
+    }
+
+    /**
+     * Convert a primitive byte[] to a Byte[]
+     *
+     * @param prim          a primitive byte[] to convert
+     * @return              the converted Byte[]
+     */
+    private Byte[] toByteObjArray(byte[] prim) {
+        // http://stackoverflow.com/questions/6430841/java-byte-to-byte
+        Byte[] ret = new Byte[prim.length];
+        int i = 0;
+        for (byte b : prim) ret[i++] = b;
+        return ret;
     }
 }
