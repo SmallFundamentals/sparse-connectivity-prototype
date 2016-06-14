@@ -12,7 +12,7 @@ public class RsyncAnalyser {
     private Adler32 adler;
     private MessageDigest md;
     // TODO: Check that data can't contain -1
-    private final byte SEQUENCE_DELIMITER = -1;
+    private final byte SEQUENCE_DELIMITER = 3;
 
     public RsyncAnalyser() throws NoSuchAlgorithmException {
         this.adler = new Adler32();
@@ -53,6 +53,7 @@ public class RsyncAnalyser {
         byte[] b = new byte[1];
         int bytesRead;
 
+        // TODO: Get rid of these counters
         int i = 0;
         int lastBlockEnd = -1;
         byte previousFirstByte = 0;
@@ -75,6 +76,7 @@ public class RsyncAnalyser {
                 bytesRead = this.dataStream.read(b);
                 assert bytesRead == 1;
                 previousFirstByte = blockBuffer.remove(0);
+                instrBuffer.add(previousFirstByte);
                 rollingChecksum = adler.calc(rollingChecksum, defaultBlockSize, previousFirstByte, b[0]);
                 blockBuffer.add(b[0]);
             }
@@ -122,11 +124,6 @@ public class RsyncAnalyser {
                     continue;
                 }
                 // MD5 doesn't match; we assume it's a coincidence
-            }
-
-            // Local block not found. Store byte in buffer, increment counters
-            if (blockBuffer.size() > 0) {
-                instrBuffer.add(blockBuffer.get(0));
             }
             i++;
         }

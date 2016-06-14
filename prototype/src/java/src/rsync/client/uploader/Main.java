@@ -2,10 +2,6 @@ package rsync.client.uploader;
 
 import java.io.*;
 import java.security.*;
-import java.util.*;
-
-// http://commons.apache.org/proper/commons-codec/download_codec.cgi
-import org.apache.commons.codec.binary.Hex;
 
 public class Main {
 
