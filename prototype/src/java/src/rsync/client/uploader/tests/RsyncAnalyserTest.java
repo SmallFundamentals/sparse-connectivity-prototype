@@ -28,8 +28,8 @@ public class RsyncAnalyserTest {
     public void testGenerateNewFile() throws Exception {
         int expectedSize = this.dataStream.available();
         this.analyser.update(this.dataStream);
-        List<Byte> instructions = this.analyser.generate(new ArrayList<>(), new ArrayList<>(), 1024, 1024);
-        assertEquals(expectedSize, instructions.size());
+        List<Object> instructions = this.analyser.generate(new ArrayList<>(), new ArrayList<>(), 1024, 1024);
+        assertEquals(expectedSize, ((List<Byte>)instructions.get(0)).size());
     }
 
     @Test

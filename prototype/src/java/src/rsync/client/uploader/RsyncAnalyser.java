@@ -32,7 +32,7 @@ public class RsyncAnalyser {
      * @param defaultBlockSize          the size of data blocks used to calculate checksums, in bytes
      * @param lastBlockSize             remote file size % default block size
      */
-    public List<Byte> generate(List<Long> remoteRollingChksms, List<String> remoteMD5Chksms, int defaultBlockSize,
+    public List<Object> generate(List<Long> remoteRollingChksms, List<String> remoteMD5Chksms, int defaultBlockSize,
             int lastBlockSize) throws IOException {
         // TODO: Have a list of tuples for the two checksums instead of two lists.
         // TODO: Differentiate between different types of errors
@@ -60,7 +60,7 @@ public class RsyncAnalyser {
         long rollingChecksum = 0;
 
         // Entire instructions set, unfragmented
-        List<Byte> instructions = new ArrayList<>();
+        List<Object> instructions = new ArrayList<>();
         // A buffer for holding bytes until it is ready to be written/sent
         // TODO: This is not really useful right now, but could be useful if we use a generator approach in the future
         List<Byte> instrBuffer = new ArrayList<>();
@@ -88,11 +88,8 @@ public class RsyncAnalyser {
                     // If we read less than a full block but there's still data left, something unexpected is wrong.
                     assert dataStream.available() == 0;
                     // Write all remaining bytes to instructions and update counters
-                    instructions.add(SEQUENCE_DELIMITER);
-                    for (byte nextByte : fullBlock) {
-                        instructions.add(nextByte);
-                    }
-                    instructions.add(SEQUENCE_DELIMITER);
+                    blockBuffer = new ArrayList<>(Arrays.asList(this.toByteObjArray(fullBlock)));
+                    instructions.add(blockBuffer);
                     lastBlockEnd = i + bytesRead;
                     break;
                 }
@@ -107,9 +104,7 @@ public class RsyncAnalyser {
                 // Validate MD5 checksum.
                 if (remoteMD5Chksms.get(remoteIDX) == this.getMD5HashString(fullBlock, defaultBlockSize)) {
                     if (instrBuffer.size() > 0) {
-                        instructions.add(SEQUENCE_DELIMITER);
-                        instructions.addAll(instrBuffer);
-                        instructions.add(SEQUENCE_DELIMITER);
+                        instructions.add(instrBuffer);
                         instrBuffer.clear();
                     }
                     instructions.add((byte)(int)remoteIDX);
@@ -131,9 +126,7 @@ public class RsyncAnalyser {
         // Clear buffers one last time
         instrBuffer.addAll(blockBuffer);
         if (instrBuffer.size() > 0) {
-            instructions.add(SEQUENCE_DELIMITER);
-            instructions.addAll(instrBuffer);
-            instructions.add(SEQUENCE_DELIMITER);
+            instructions.add(instrBuffer);
         }
 
         return instructions;
