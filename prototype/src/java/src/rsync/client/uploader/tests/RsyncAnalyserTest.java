@@ -7,7 +7,7 @@ import rsync.client.uploader.RsyncAnalyser;
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.util.ArrayList;
+import java.util.*;
 
 import static org.junit.Assert.*;
 
@@ -27,7 +27,9 @@ public class RsyncAnalyserTest {
     @Test
     public void testGenerate() throws Exception {
         this.analyser.update(this.dataStream);
-        System.out.println(this.analyser.generate(new ArrayList<>(), new ArrayList<>(), 1024, 1024));
+        List<Byte> instructions = this.analyser.generate(new ArrayList<>(), new ArrayList<>(), 1024, 1024);
+        System.out.println(instructions.size());
+        System.out.println(instructions);
     }
 
     @Test

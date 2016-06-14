@@ -32,7 +32,7 @@ public class RsyncAnalyser {
      * @param defaultBlockSize          the size of data blocks used to calculate checksums, in bytes
      * @param lastBlockSize             remote file size % default block size
      */
-    public Object generate(List<Long> remoteRollingChksms, List<String> remoteMD5Chksms, int defaultBlockSize,
+    public List<Byte> generate(List<Long> remoteRollingChksms, List<String> remoteMD5Chksms, int defaultBlockSize,
             int lastBlockSize) throws IOException {
         // TODO: Have a list of tuples for the two checksums instead of two lists.
         // TODO: Differentiate between different types of errors
@@ -71,7 +71,6 @@ public class RsyncAnalyser {
             assert i > lastBlockEnd;
             // A previous calculation is available to do rolling checksum calculation on
             if ((i - lastBlockEnd > 1) && (rollingChecksum != 0)) {
-                System.out.println("ROLL");
                 // Read 1 additional byte and do rolling checksum calculation
                 bytesRead = this.dataStream.read(b);
                 assert bytesRead == 1;
@@ -81,14 +80,12 @@ public class RsyncAnalyser {
             }
             // Start a new block for calculation.
             else {
-                System.out.println("FIRST");
                 // Do full block read
                 bytesRead = this.dataStream.read(fullBlock);
                 if (bytesRead < defaultBlockSize) {
                     // If we read less than a full block but there's still data left, something unexpected is wrong.
                     assert dataStream.available() == 0;
                     // Write all remaining bytes to instructions and update counters
-                    System.out.println("NOT NORMAL");
                     instructions.add(SEQUENCE_DELIMITER);
                     for (byte nextByte : fullBlock) {
                         instructions.add(nextByte);
@@ -108,7 +105,6 @@ public class RsyncAnalyser {
                 // Validate MD5 checksum.
                 if (remoteMD5Chksms.get(remoteIDX) == this.getMD5HashString(fullBlock, defaultBlockSize)) {
                     if (instrBuffer.size() > 0) {
-                        System.out.println("NORMAL");
                         instructions.add(SEQUENCE_DELIMITER);
                         instructions.addAll(instrBuffer);
                         instructions.add(SEQUENCE_DELIMITER);
@@ -133,10 +129,10 @@ public class RsyncAnalyser {
                 instrBuffer.add(blockBuffer.get(0));
             }
             i++;
-            System.out.println(i);
         }
 
-        // Clear buffer one last time
+        // Clear buffers one last time
+        instrBuffer.addAll(blockBuffer);
         if (instrBuffer.size() > 0) {
             instructions.add(SEQUENCE_DELIMITER);
             instructions.addAll(instrBuffer);
