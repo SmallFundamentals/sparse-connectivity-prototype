@@ -65,6 +65,3 @@ target/
 
 #Ipython Notebook
 .ipynb_checkpoints
-
-# IntelliJ
-.idea/
