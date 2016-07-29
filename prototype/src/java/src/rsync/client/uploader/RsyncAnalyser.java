@@ -84,16 +84,24 @@ public class RsyncAnalyser {
             else {
                 // Do full block read
                 bytesRead = this.dataStream.read(fullBlock);
+
+                // Changed so that incomplete blocks (in standard cases, usually the last block) still gets checked.
+                // TODO: This still needs to be tested thoroughly.
+                // Uncomment to make it such that the last block is sent as raw without checking.
+                /*
                 if (bytesRead < defaultBlockSize) {
                     // If we read less than a full block but there's still data left, something unexpected is wrong.
                     assert dataStream.available() == 0;
+
                     // Write all remaining bytes to instructions and update counters
                     blockBuffer = new ArrayList<>(Arrays.asList(this.toByteObjArray(fullBlock)));
                     instructions.add(blockBuffer);
                     lastBlockEnd = i + bytesRead;
                     break;
+
                 }
-                rollingChecksum = adler.calc(fullBlock, defaultBlockSize);
+                */
+                rollingChecksum = adler.calc(fullBlock, bytesRead);
                 blockBuffer = new ArrayList<>(Arrays.asList(this.toByteObjArray(fullBlock)));
             }
 
@@ -102,12 +110,12 @@ public class RsyncAnalyser {
             // Local block found in remote hashes
             if (remoteIDX != null) {
                 // Validate MD5 checksum.
-                if (remoteMD5Chksms.get(remoteIDX) == this.getMD5HashString(fullBlock, defaultBlockSize)) {
+                if (remoteMD5Chksms.get(remoteIDX).equals(this.getMD5HashString(fullBlock, bytesRead))) {
                     if (instrBuffer.size() > 0) {
                         instructions.add(instrBuffer);
                         instrBuffer.clear();
                     }
-                    instructions.add((byte)(int)remoteIDX);
+                    instructions.add(remoteIDX);
                     // TODO: Convert remoteRollingMap to <Long, List<Integer>> instead
                     // Prevent duplicate matches to same block
                     // If this scenario is actually valid, then the map would only create 1 entry for the colliding hashes
@@ -124,7 +132,9 @@ public class RsyncAnalyser {
         }
 
         // Clear buffers one last time
-        instrBuffer.addAll(blockBuffer);
+        if (blockBuffer != null) {
+            instrBuffer.addAll(blockBuffer);
+        }
         if (instrBuffer.size() > 0) {
             instructions.add(instrBuffer);
         }
