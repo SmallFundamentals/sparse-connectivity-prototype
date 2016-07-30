@@ -54,7 +54,22 @@ public class RsyncAnalyserTest {
         List<Long> rolling = this.getRollingChecksumList(PARTIAL_0_ROLLING_CHECKSUM_FILENAME);
         List<String> md5 = this.getMD5ChecksumList(PARTIAL_0_MD5_CHECKSUM_FILENAME);
         List<Object> instructions = this.analyser.generate(rolling, md5, 1024, 1024);
-        System.out.println(instructions);
+
+        int i = 0;
+        List<Integer> missingBlock = new ArrayList<Integer>();
+        missingBlock.add(2);
+        missingBlock.add(17);
+        for (int count = 0; count < instructions.size(); count++) {
+            if (instructions.get(count) instanceof Integer) {
+                assertEquals(i, instructions.get(count));
+                i++;
+            }
+            else {
+                assertEquals(0, Integer.compare(count, missingBlock.get(0)));
+                missingBlock.remove(0);
+            }
+        }
+        assertEquals(0, missingBlock.size());
         printSuccessMessage("testGeneratePartialFile");
     }
 
