@@ -37,9 +37,10 @@ git clone git@github.com:SmallFundamentals/sparse-connectivity-prototype.git .
 
 [Run through this](https://help.github.com/articles/error-permission-denied-publickey/) if you get permission denied.
 
-Install Apache Commons:
-- Download binaries and extract jar file (e.g. commons-codec-1.10.jar)
-- Move jar files to /Library/Java/Extensions/
+Install Maven:
+- Run `brew install maven`
+- Make sure you have Java 1.8 (or higher in the future)
+- Read [docs](http://maven.apache.org/guides/) if you're not familiar with Maven
 
 Install virtualenv and packages:
 - [Follow this](http://flask.pocoo.org/docs/0.11/installation/)
@@ -47,10 +48,27 @@ Install virtualenv and packages:
 - DO NOT run `pip install Flask`, this is done by the above command
 - DO NOT push the folder `venv` created by the above command
 
-To run:
+To run java code:
+```shell
+# Go to the folder that contains pom.xml
+# pom.xml contains packages on which our code depends
+cd prototype/src/java
+
+# Build
+mvn package
+
+# Run
+java -cp target/javaApp-1.0-SNAPSHOT.jar rsync.client.uploader.Main
+
+# Run test
+mvn test
+# Specific class
+mvn test -Dtest=RsyncAnalyserTest
+```
+
+To run python code or python server:
 ```shell
 make server (this runs the python code directly)
-make client (this compiles all the Java files for the package and then runs it)
 
 python app.py (this runs the Flask server)
 ```
