@@ -27,12 +27,15 @@ def main():
     BLOCK_SIZE = 1024 #Bytes
     IMAGE_PATH = os.path.join(os.path.dirname(__file__), '../../assets/sm_img.jpeg')
 
+    local_copy = []
+
     with open(IMAGE_PATH, 'rb') as f:
         rolling_wf = open('py_rolling.sum','w')
         md5_wf = open('py_md5.sum','w')
 
         byte = f.read(BLOCK_SIZE)
         while byte != "":
+            local_copy.append(byte)
             rolling_checksum = adler_32(byte)
             md5_checksum = md5(byte)
 
@@ -40,6 +43,17 @@ def main():
             md5_wf.write(md5_checksum + "\n")
 
             byte = f.read(BLOCK_SIZE)
+
+    output_wf = open('built.jpeg','w')
+    with open('instr.out') as f:
+        content = f.readlines()
+        for line in content:
+            if line.strip().isdigit():
+                output_wf.write(local_copy[int(line.strip())])
+            else:
+                output_wf.write(line)
+
+
 
 
 
