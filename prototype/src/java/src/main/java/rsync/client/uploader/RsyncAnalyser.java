@@ -79,6 +79,13 @@ public class RsyncAnalyser {
                 instrBuffer.add(previousFirstByte);
                 rollingChecksum = adler.calc(rollingChecksum, defaultBlockSize, previousFirstByte, b[0]);
                 blockBuffer.add(b[0]);
+
+                // Modify fullBlock so that we can calculate MD5 of the correct block.
+                for (int idx = 1; idx < fullBlock.length; idx++) {
+                    fullBlock[idx - 1] = fullBlock[idx];
+                }
+                fullBlock[fullBlock.length - 1] = b[0];
+                bytesRead = defaultBlockSize;
             }
             // Start a new block for calculation.
             else {

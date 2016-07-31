@@ -11,11 +11,11 @@ import static org.junit.Assert.*;
 
 public class RsyncAnalyserTest {
 
-    private static String TEST_FILE_PATH = "./src/rsync/client/uploader/tests/assets/sm_img.jpeg";
-    private static String ROLLING_CHECKSUM_FILENAME = "./src/rsync/client/uploader/tests/assets/sm_img_rolling.sum";
-    private static String MD5_CHECKSUM_FILENAME = "./src/rsync/client/uploader/tests/assets/sm_img_md5.sum";
-    private static String PARTIAL_0_ROLLING_CHECKSUM_FILENAME = "./src/rsync/client/uploader/tests/assets/partial_0_rolling.sum";
-    private static String PARTIAL_0_MD5_CHECKSUM_FILENAME = "./src/rsync/client/uploader/tests/assets/partial_0_md5.sum";
+    private static String TEST_FILE_PATH = "./src/test/java/rsync/client/uploader/assets/sm_img.jpeg";
+    private static String ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/sm_img_rolling.sum";
+    private static String MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/sm_img_md5.sum";
+    private static String PARTIAL_0_ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_0_rolling.sum";
+    private static String PARTIAL_0_MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_0_md5.sum";
 
     RsyncAnalyser analyser;
     BufferedInputStream dataStream;
@@ -32,6 +32,7 @@ public class RsyncAnalyserTest {
         this.analyser.update(this.dataStream);
         List<Object> instructions = this.analyser.generate(new ArrayList<>(), new ArrayList<>(), 1024, 1024);
         assertEquals(expectedSize, ((List<Byte>)instructions.get(0)).size());
+        printSuccessMessage("testGenerateNewFile");
     }
 
     @Test
@@ -44,6 +45,7 @@ public class RsyncAnalyserTest {
         for (int i = 0; i < 19; i++) {
             assertEquals(i, instructions.get(i));
         }
+        printSuccessMessage("testGenerateCompleteFile");
     }
 
     @Test
@@ -52,7 +54,23 @@ public class RsyncAnalyserTest {
         List<Long> rolling = this.getRollingChecksumList(PARTIAL_0_ROLLING_CHECKSUM_FILENAME);
         List<String> md5 = this.getMD5ChecksumList(PARTIAL_0_MD5_CHECKSUM_FILENAME);
         List<Object> instructions = this.analyser.generate(rolling, md5, 1024, 1024);
-        System.out.println(instructions);
+
+        int i = 0;
+        List<Integer> missingBlock = new ArrayList<Integer>();
+        missingBlock.add(2);
+        missingBlock.add(17);
+        for (int count = 0; count < instructions.size(); count++) {
+            if (instructions.get(count) instanceof Integer) {
+                assertEquals(i, instructions.get(count));
+                i++;
+            }
+            else {
+                assertEquals(0, Integer.compare(count, missingBlock.get(0)));
+                missingBlock.remove(0);
+            }
+        }
+        assertEquals(0, missingBlock.size());
+        printSuccessMessage("testGeneratePartialFile");
     }
 
     private static BufferedInputStream getBufferedIStream() throws FileNotFoundException {
@@ -87,5 +105,9 @@ public class RsyncAnalyserTest {
             throw e;
         }
         return checksum;
+    }
+
+    private static void printSuccessMessage(String message) {
+        System.out.println((char)27 + "[32mPASS: " + message + (char)27 + "[0m");
     }
 }
