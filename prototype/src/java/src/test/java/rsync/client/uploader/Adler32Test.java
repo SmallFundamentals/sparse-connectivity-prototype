@@ -13,8 +13,8 @@ import static org.junit.Assert.*;
 public class Adler32Test {
 
     private static int BLOCK_SIZE_BYTES = 1024;
-    private static String TEST_FILE_PATH = "./src/rsync/client/uploader/tests/assets/sm_img.jpeg";
-    private static String ROLLING_CHECKSUM_FILENAME = "./src/rsync/client/uploader/tests/assets/sm_img_rolling.sum";
+    private static String TEST_FILE_PATH = "./src/test/java/rsync/client/uploader/assets/sm_img.jpeg";
+    private static String ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/sm_img_rolling.sum";
 
     Adler32 adler;
     BufferedInputStream dataStream;

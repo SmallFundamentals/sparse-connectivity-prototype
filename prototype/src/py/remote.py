@@ -24,6 +24,9 @@ def md5(block):
 
 
 def main():
+    diff()
+    return
+
     BLOCK_SIZE = 1024 #Bytes
     IMAGE_PATH = os.path.join(os.path.dirname(__file__), '../../assets/sm_img.jpeg')
 
@@ -48,13 +51,9 @@ def main():
     with open('instr.out') as f:
         content = f.readlines()
         for line in content:
+            data = line
             if line.strip().isdigit():
-                output_wf.write(local_copy[int(line.strip())])
-            else:
-                output_wf.write(line)
-
-
-
-
+                data = local_copy[int(line.strip())]
+            output_wf.write(data)
 
 main()

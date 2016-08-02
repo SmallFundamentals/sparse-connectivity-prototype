@@ -25,8 +25,9 @@ public class Main {
         RsyncAnalyser analyser = new RsyncAnalyser();
         analyser.update(dataStream);
 
-        String PARTIAL_0_ROLLING_CHECKSUM_FILENAME = "./src/rsync/client/uploader/tests/assets/partial_0_rolling.sum";
-        String PARTIAL_0_MD5_CHECKSUM_FILENAME = "./src/rsync/client/uploader/tests/assets/partial_0_md5.sum";
+        String PARTIAL_0_ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_0_rolling.sum";
+        String PARTIAL_0_MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_0_md5.sum";
+
         List<Long> rolling = getRollingChecksumList(PARTIAL_0_ROLLING_CHECKSUM_FILENAME);
         List<String> md5 = getMD5ChecksumList(PARTIAL_0_MD5_CHECKSUM_FILENAME);
         List<Object> instructions = analyser.generate(rolling, md5, 1024, 1024);
