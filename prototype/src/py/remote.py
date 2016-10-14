@@ -24,9 +24,6 @@ def md5(block):
 
 
 def main():
-    diff()
-    return
-
     BLOCK_SIZE = 1024 #Bytes
     IMAGE_PATH = os.path.join(os.path.dirname(__file__), '../../assets/sm_img.jpeg')
 
@@ -48,12 +45,29 @@ def main():
             byte = f.read(BLOCK_SIZE)
 
     output_wf = open('built.jpeg','w')
+    size = 0
+    size_local = 0
+    size_foreign = 0
     with open('instr.out') as f:
         content = f.readlines()
+        """
+        # Code that uses original image.
+        for line in local_copy:
+            output_wf.write(line)
+            size += len(line)
+        # NOTE TO SELF: This proves that the instructions generated is likely at fault. Writing strictly from local data works as expected.
+        # Next step: Fix Maven dependencies, then generate instruction set that includes ALL data, and see what happens.
+        """
         for line in content:
             data = line
             if line.strip().isdigit():
                 data = local_copy[int(line.strip())]
+                size_local += len(data)
+            else:
+                size_foreign += len(data)
             output_wf.write(data)
-
+            size += len(data)
+    print size
+    print "LOCAL " + str(size_local)
+    print "FOREIGN " + str(size_foreign)
 main()

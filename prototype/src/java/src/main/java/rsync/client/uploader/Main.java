@@ -8,8 +8,6 @@ import java.util.*;
 
 public class Main {
 
-    public final static String MD5_CHECKSUM_FILENAME = "md5_checksum";
-    public final static String ROLLING_CHECKSUM_FILENAME = "rolling_checksum";
     public final static String UPLOAD_FILENAME = "../../assets/sm_img.jpeg";
     public final static int BLOCK_SIZE = 1024;
 
@@ -27,9 +25,11 @@ public class Main {
 
         String PARTIAL_0_ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_0_rolling.sum";
         String PARTIAL_0_MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_0_md5.sum";
+        String ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/sm_img_rolling.sum";
+        String MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/sm_img_md5.sum";
 
-        List<Long> rolling = getRollingChecksumList(PARTIAL_0_ROLLING_CHECKSUM_FILENAME);
-        List<String> md5 = getMD5ChecksumList(PARTIAL_0_MD5_CHECKSUM_FILENAME);
+        List<Long> rolling = getRollingChecksumList(ROLLING_CHECKSUM_FILENAME);
+        List<String> md5 = getMD5ChecksumList(MD5_CHECKSUM_FILENAME);
         List<Object> instructions = analyser.generate(rolling, md5, 1024, 1024);
         pseudosend(instructions);
     }
@@ -43,7 +43,8 @@ public class Main {
      * @param instructions
      */
     private static void pseudosend(List<Object> instructions) throws IOException {
-        Path file = Paths.get("instr.out");
+        // Write to python folder so that it's easy to test
+        Path file = Paths.get("../py/instr.out");
         // Write an empty byte to clear the file
         Files.write(file, new byte[0]);
         try {
@@ -59,8 +60,9 @@ public class Main {
                     Files.write(file, lines, Charset.forName("UTF-8"), StandardOpenOption.APPEND);
                 }
             }
-            List<String> lines = Arrays.asList("\n");
-            Files.write(file, lines, Charset.forName("UTF-8"), StandardOpenOption.APPEND);
+            // TODO (blakeyu): WHY DID I DO THIS?? This caused the 2 bytes bug.
+            // List<String> lines = Arrays.asList("\n");
+            // Files.write(file, lines, Charset.forName("UTF-8"), StandardOpenOption.APPEND);
         } catch (IOException e) {
             System.out.println(e);
             throw e;
