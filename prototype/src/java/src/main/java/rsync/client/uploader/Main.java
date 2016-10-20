@@ -28,8 +28,8 @@ public class Main {
         String ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/sm_img_rolling.sum";
         String MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/sm_img_md5.sum";
 
-        List<Long> rolling = getRollingChecksumList(ROLLING_CHECKSUM_FILENAME);
-        List<String> md5 = getMD5ChecksumList(MD5_CHECKSUM_FILENAME);
+        List<Long> rolling = getRollingChecksumList(PARTIAL_0_ROLLING_CHECKSUM_FILENAME);
+        List<String> md5 = getMD5ChecksumList(PARTIAL_0_MD5_CHECKSUM_FILENAME);
         List<Object> instructions = analyser.generate(rolling, md5, 1024, 1024);
         pseudosend(instructions);
     }
@@ -47,13 +47,16 @@ public class Main {
         Path file = Paths.get("../py/instr.out");
         // Write an empty byte to clear the file
         Files.write(file, new byte[0]);
+        System.out.println(instructions);
         try {
             for (int i = 0; i < instructions.size(); i++) {
                 if (instructions.get(i) instanceof ArrayList) {
                     // Raw byte data
                     List<Byte> data = (List<Byte>) instructions.get(i);
                     Byte[] bytes = data.toArray(new Byte[data.size()]);
-                    Files.write(file, getRawBytes(bytes), StandardOpenOption.APPEND);
+                    System.out.println(i);
+                    System.out.println(data.size());
+                    Files.write(file, getRawBytes(bytes, true), StandardOpenOption.APPEND);
                 } else if (instructions.get(i) instanceof Integer) {
                     // Int
                     List<String> lines = Arrays.asList(Integer.toString((int) instructions.get(i)));
@@ -105,5 +108,18 @@ public class Main {
             raw[i] = data[i];
         }
         return raw;
+    }
+
+    private static byte[] getRawBytes(Byte[] data, boolean hasNewLineChar) {
+        if (hasNewLineChar) {
+            byte[] raw = new byte[data.length + 1];
+            for (int i = 0; i < data.length; i++) {
+                raw[i] = data[i];
+            }
+            raw[data.length] = '\n';
+            return raw;
+        } else {
+            return getRawBytes(data);
+        }
     }
 }

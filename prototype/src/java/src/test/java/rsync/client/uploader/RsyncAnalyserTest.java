@@ -65,7 +65,7 @@ public class RsyncAnalyserTest {
                 i++;
             }
             else {
-                assertEquals(0, Integer.compare(count, missingBlock.get(0)));
+                assertEquals((long)count, (long)missingBlock.get(0));
                 missingBlock.remove(0);
             }
         }

@@ -119,7 +119,8 @@ public class RsyncAnalyser {
                 // Validate MD5 checksum.
                 if (remoteMD5Chksms.get(remoteIDX).equals(this.getMD5HashString(fullBlock, bytesRead))) {
                     if (instrBuffer.size() > 0) {
-                        instructions.add(instrBuffer);
+                        List<Byte> copy = new ArrayList<Byte>(instrBuffer);
+                        instructions.add(copy);
                         instrBuffer.clear();
                     }
                     instructions.add(remoteIDX);
@@ -143,8 +144,11 @@ public class RsyncAnalyser {
             instrBuffer.addAll(blockBuffer);
         }
         if (instrBuffer.size() > 0) {
+            System.out.println(instrBuffer.size());
             instructions.add(instrBuffer);
         }
+
+        System.out.println(instructions);
 
         return instructions;
     }

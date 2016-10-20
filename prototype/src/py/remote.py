@@ -48,6 +48,8 @@ def main():
     size = 0
     size_local = 0
     size_foreign = 0
+
+    size_foreign_temp = 0
     with open('instr.out') as f:
         content = f.readlines()
         """
@@ -61,13 +63,22 @@ def main():
         for line in content:
             data = line
             if line.strip().isdigit():
-                data = local_copy[int(line.strip())]
+                idx = int(line.strip())
+                data = local_copy[idx]
                 size_local += len(data)
+                # debug
+                if size_foreign_temp > 0:
+                    print size_foreign_temp
+                    size_foreign_temp = 0
             else:
                 size_foreign += len(data)
+                print "last char" + data[-1]
+                # debug
+                size_foreign_temp += len(data)
             output_wf.write(data)
             size += len(data)
     print size
     print "LOCAL " + str(size_local)
     print "FOREIGN " + str(size_foreign)
+    print size_foreign_temp
 main()
