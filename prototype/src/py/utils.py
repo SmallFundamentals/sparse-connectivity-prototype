@@ -104,4 +104,29 @@ def get_blocks(img_path):
             byte = f.read(BLOCK_SIZE)
     return in_mem_copy
 
-# def build_partial_file(filename, )
+def build_partial_file(img_path,
+                       rolling_chksum_filename,
+                       md5_chksum_filename,
+                       output_filename='out/partial.jpeg'):
+    in_mem_copy = []
+    rolling_checksums = [int(chksum) for chksum in
+        open(rolling_chksum_filename, 'rb').read().splitlines()]
+    md5_checksums = open(md5_chksum_filename, 'rb').read().splitlines()
+    print rolling_checksums
+    print md5_checksums
+    output_wf = open(output_filename,'w')
+    with open(img_path, 'rb') as f:
+        byte = f.read(BLOCK_SIZE)
+        while byte != "":
+            # Calculate checksums
+            rolling_checksum = adler_32(byte)
+            md5_checksum = md5(byte)
+            # Checksums should match - either both contains, or both does not contain
+            assert not ((rolling_checksum in rolling_checksums) ^ (md5_checksum in md5_checksums))
+            if (rolling_checksum in rolling_checksums) and (md5_checksum in md5_checksums):
+                output_wf.write(byte)
+                in_mem_copy.append(byte)
+            # Read next byte
+            byte = f.read(BLOCK_SIZE)
+    return in_mem_copy
+
