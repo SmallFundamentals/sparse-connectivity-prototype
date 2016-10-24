@@ -23,13 +23,18 @@ public class Main {
         RsyncAnalyser analyser = new RsyncAnalyser();
         analyser.update(dataStream);
 
+        String PARTIAL_1_ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_1_rolling.sum";
+        String PARTIAL_1_MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_1_md5.sum";
         String PARTIAL_0_ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_0_rolling.sum";
         String PARTIAL_0_MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_0_md5.sum";
         String ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/sm_img_rolling.sum";
         String MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/sm_img_md5.sum";
 
-        List<Long> rolling = getRollingChecksumList(PARTIAL_0_ROLLING_CHECKSUM_FILENAME);
-        List<String> md5 = getMD5ChecksumList(PARTIAL_0_MD5_CHECKSUM_FILENAME);
+        String ROLLING_FILENAME = PARTIAL_1_ROLLING_CHECKSUM_FILENAME;
+        String MD5_FILENAME = PARTIAL_1_MD5_CHECKSUM_FILENAME;
+
+        List<Long> rolling = getRollingChecksumList(ROLLING_FILENAME);
+        List<String> md5 = getMD5ChecksumList(MD5_FILENAME);
         List<Object> instructions = analyser.generate(rolling, md5, 1024, 1024);
         pseudosend(instructions);
     }
