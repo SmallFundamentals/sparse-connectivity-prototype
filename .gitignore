@@ -2,7 +2,8 @@
 .DS_Store
 prototype/src/py/*.sum
 *.class
-*out/
+
+prototype/out/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

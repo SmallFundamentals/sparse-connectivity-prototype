@@ -26,9 +26,9 @@ def md5(block):
 
 # Rsync analyser helpers
 
-def build_wrapper(instr_filename='instr.out',
+def build_wrapper(instr_filename='in/instr.out',
                   local_filename=IMAGE_PATH,
-                  output_filename='output.jpeg'):
+                  output_filename='out/output.jpeg'):
     instructions = []
     with open(instr_filename) as f:
         content = f.readlines()
@@ -43,7 +43,7 @@ def build_wrapper(instr_filename='instr.out',
 
 def build(instructions,
           local_filename=IMAGE_PATH,
-          output_filename='output.jpeg'):
+          output_filename='out/output.jpeg'):
     """
     Build a file given a set of instructions.
 
@@ -61,8 +61,8 @@ def build(instructions,
     return size
 
 def calc(img_path,
-         rolling_chksum_filename="py_rolling.sum",
-         md5_chksum_filename="py_md5.sum"):
+         rolling_chksum_filename="out/py_rolling.sum",
+         md5_chksum_filename="out/py_md5.sum"):
     """
     Given an image path, calculate the checksums for each block
     and write them to file.
@@ -104,4 +104,4 @@ def get_blocks(img_path):
             byte = f.read(BLOCK_SIZE)
     return in_mem_copy
 
-#def build_partial_file(filename, )
+# def build_partial_file(filename, )
