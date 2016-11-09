@@ -1,12 +1,25 @@
 package rsync.client.uploader;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.*;
 import java.nio.file.*;
 import java.security.*;
 import java.util.*;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+
 public class Main {
+
+    private final static String UPLOAD_INSTRUCTION_URL = "http://localhost:5000/upload/instructions";
 
     public final static String UPLOAD_FILENAME = "../../assets/sm_img.jpeg";
     public final static int BLOCK_SIZE = 1024;
@@ -44,10 +57,41 @@ public class Main {
     }
 
     /**
+     * Send a binary chunk with its index to server
+     * @param fileName
+     * @param index
+     * @param bytes
+     */
+    private static void sendBinary(String fileName, int index, byte[] bytes) {
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost post = new HttpPost(UPLOAD_INSTRUCTION_URL);
+
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        builder.addBinaryBody("chunk", bytes, ContentType.DEFAULT_BINARY, fileName);
+        builder.addTextBody("index", String.valueOf(index), ContentType.TEXT_PLAIN);
+
+        HttpEntity entity = builder.build();
+        post.setEntity(entity);
+
+        try {
+            HttpResponse response = httpClient.execute(post);
+            int statusCode = response.getStatusLine().getStatusCode();
+            String responseBody = EntityUtils.toString(response.getEntity());
+            System.out.println(String.format("Status: %d Response: %s", statusCode, responseBody));
+        } catch (IOException ie) {
+            System.out.println(ie);
+        }
+    }
+
+    /**
      * Writes to a file to be parsed by python client, instead of sending it through network protocols
      * @param instructions
      */
     private static void pseudosend(List<Object> instructions) throws IOException {
+        // TODO: Use a real file name
+        final String fileName = "test.img";
+
         // Write to python folder so that it's easy to test
         Path file = Paths.get("../py/instr.out");
         // Write an empty byte to clear the file
@@ -61,7 +105,10 @@ public class Main {
                     Byte[] bytes = data.toArray(new Byte[data.size()]);
                     System.out.println(i);
                     System.out.println(data.size());
-                    Files.write(file, getRawBytes(bytes, true), StandardOpenOption.APPEND);
+                    byte[] rawBytes = getRawBytes(bytes, true);
+                    Files.write(file, rawBytes, StandardOpenOption.APPEND);
+
+                    sendBinary(fileName, i, rawBytes);
                 } else if (instructions.get(i) instanceof Integer) {
                     // Int
                     List<String> lines = Arrays.asList(Integer.toString((int) instructions.get(i)));
