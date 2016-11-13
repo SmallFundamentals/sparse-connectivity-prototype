@@ -50,10 +50,28 @@ public class Main {
         List<String> md5 = getMD5ChecksumList(MD5_FILENAME);
         List<Object> instructions = analyser.generate(rolling, md5, 1024, 1024);
         pseudosend(instructions);
+        send(instructions);
     }
 
-    private static void send() {
+    /**
+     * Extract data from instructions and send it via POST request.
+     * @param instructions
+     */
+    private static void send(List<Object> instructions) {
+        // TODO: Use a real file name
+        final String fileName = "test.img";
 
+        for (int i = 0; i < instructions.size(); i++) {
+            if (instructions.get(i) instanceof ArrayList) {
+                // Raw byte data
+                List<Byte> data = (List<Byte>) instructions.get(i);
+                Byte[] bytes = data.toArray(new Byte[data.size()]);
+                byte[] rawBytes = getRawBytes(bytes, true);
+
+                System.out.println(String.format("Sending block #%d, size = %d", i, data.size()));
+                sendBinary(fileName, i, rawBytes);
+            }
+        }
     }
 
     /**
@@ -89,9 +107,6 @@ public class Main {
      * @param instructions
      */
     private static void pseudosend(List<Object> instructions) throws IOException {
-        // TODO: Use a real file name
-        final String fileName = "test.img";
-
         // Write to python folder so that it's easy to test
         Path file = Paths.get("../py/instr.out");
         // Write an empty byte to clear the file
@@ -107,8 +122,6 @@ public class Main {
                     System.out.println(data.size());
                     byte[] rawBytes = getRawBytes(bytes, true);
                     Files.write(file, rawBytes, StandardOpenOption.APPEND);
-
-                    sendBinary(fileName, i, rawBytes);
                 } else if (instructions.get(i) instanceof Integer) {
                     // Int
                     List<String> lines = Arrays.asList(Integer.toString((int) instructions.get(i)));
