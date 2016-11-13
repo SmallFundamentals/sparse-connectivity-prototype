@@ -1,12 +1,25 @@
 package rsync.client.uploader;
 
 import java.io.*;
+import java.net.URI;
 import java.nio.charset.*;
 import java.nio.file.*;
 import java.security.*;
 import java.util.*;
 
+import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.mime.MultipartEntityBuilder;
+import org.apache.http.entity.mime.HttpMultipartMode;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+
 public class Main {
+
+    private final static String UPLOAD_INSTRUCTION_URL = "http://localhost:5000/upload/instructions";
 
     public final static String UPLOAD_FILENAME = "../../assets/sm_img.jpeg";
     public final static int BLOCK_SIZE = 1024;
@@ -37,10 +50,56 @@ public class Main {
         List<String> md5 = getMD5ChecksumList(MD5_FILENAME);
         List<Object> instructions = analyser.generate(rolling, md5, 1024, 1024);
         pseudosend(instructions);
+        send(instructions);
     }
 
-    private static void send() {
+    /**
+     * Extract data from instructions and send it via POST request.
+     * @param instructions
+     */
+    private static void send(List<Object> instructions) {
+        // TODO: Use a real file name
+        final String fileName = "test.img";
 
+        for (int i = 0; i < instructions.size(); i++) {
+            if (instructions.get(i) instanceof ArrayList) {
+                // Raw byte data
+                List<Byte> data = (List<Byte>) instructions.get(i);
+                Byte[] bytes = data.toArray(new Byte[data.size()]);
+                byte[] rawBytes = getRawBytes(bytes, true);
+
+                System.out.println(String.format("Sending block #%d, size = %d", i, data.size()));
+                sendBinary(fileName, i, rawBytes);
+            }
+        }
+    }
+
+    /**
+     * Send a binary chunk with its index to server
+     * @param fileName
+     * @param index
+     * @param bytes
+     */
+    private static void sendBinary(String fileName, int index, byte[] bytes) {
+        HttpClient httpClient = new DefaultHttpClient();
+        HttpPost post = new HttpPost(UPLOAD_INSTRUCTION_URL);
+
+        MultipartEntityBuilder builder = MultipartEntityBuilder.create();
+        builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
+        builder.addBinaryBody("chunk", bytes, ContentType.DEFAULT_BINARY, fileName);
+        builder.addTextBody("index", String.valueOf(index), ContentType.TEXT_PLAIN);
+
+        HttpEntity entity = builder.build();
+        post.setEntity(entity);
+
+        try {
+            HttpResponse response = httpClient.execute(post);
+            int statusCode = response.getStatusLine().getStatusCode();
+            String responseBody = EntityUtils.toString(response.getEntity());
+            System.out.println(String.format("Status: %d Response: %s", statusCode, responseBody));
+        } catch (IOException ie) {
+            System.out.println(ie);
+        }
     }
 
     /**
@@ -61,7 +120,8 @@ public class Main {
                     Byte[] bytes = data.toArray(new Byte[data.size()]);
                     System.out.println(i);
                     System.out.println(data.size());
-                    Files.write(file, getRawBytes(bytes, true), StandardOpenOption.APPEND);
+                    byte[] rawBytes = getRawBytes(bytes, true);
+                    Files.write(file, rawBytes, StandardOpenOption.APPEND);
                 } else if (instructions.get(i) instanceof Integer) {
                     // Int
                     List<String> lines = Arrays.asList(Integer.toString((int) instructions.get(i)));

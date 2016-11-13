@@ -1,23 +1,20 @@
 from sanaapp import app
 
-from core import file_reader
-from flask import jsonify
+from flask import jsonify, request
 
-import os
+@app.route("/upload/instructions", methods=["POST"])
+def receive_instruction():
+    response_payload = {}
 
-@app.route("/hash/<filename>", methods=["GET"])
-def get_file_hash(filename):
-    temp_dir = os.path.join(os.path.dirname(__file__), "../../../assets/")
+    # Extract binary data from (application/octet-stream)
+    chunk = request.files["chunk"]
+    index = request.form.get("index", None)
+    if index is None or chunk is None:
+        response_payload["error"] = "Invalid arguments"
+        return jsonify(**response_payload), 400
 
-    (rolling, md, default_size, last_size) = file_reader.get_hash(temp_dir, filename)
-    if rolling is None and md is None:
-        app.logger.warn("No such file: %s%s", temp_dir, filename)
+    app.logger.info(index)
+    app.logger.info(chunk)
+    # chunk.read() returns the content of a file as binary
 
-    jsonDict = {
-        "rolling": rolling,
-        "md": md,
-        "default_size": default_size,
-        "last_size": last_size,
-    }
-
-    return jsonify(**jsonDict)
+    return jsonify(**response_payload), 200
