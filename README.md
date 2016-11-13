@@ -54,23 +54,37 @@ To run java code:
 # pom.xml contains packages on which our code depends
 cd prototype/src/java
 
-# Build
-mvn package
+# Install packages and build 
+mvn install # with tests
+mvn install -DskipTests # without tests
 
 # Run
-java -cp target/javaApp-1.0-SNAPSHOT.jar rsync.client.uploader.Main
+mvn exec:java -D exec.mainClass=rsync.client.uploader.Main -DskipTests
 
 # Run test
 mvn test
 # Specific class
 mvn test -Dtest=RsyncAnalyserTest
+
+# Clean target and packages
+mvn clean
 ```
 
 To run python code or python server:
 ```shell
 make server (this runs the python code directly)
 
-python app.py (this runs the Flask server)
+# Running Flask server
+# Install pip and virtualenv
+cd prototype/src/py
+virtualenv venv
+source venv/bin/activate
+pip install -r requirements.txt
+python runserver.py
+
+# Cleaning up
+deactivate # while venv is activated
+rm -r venv/
 ```
 
 
