@@ -1,4 +1,5 @@
 from sanaapp import app
+from core import utils
 
 from flask import jsonify, request
 
@@ -10,11 +11,20 @@ def receive_instruction():
     chunk = request.files["chunk"]
     index = request.form.get("index", None)
     if index is None or chunk is None:
-        response_payload["error"] = "Invalid arguments"
-        return jsonify(**response_payload), 400
+        return _get_error_payload("Invalid arguments", 400)
 
     app.logger.info(index)
     app.logger.info(chunk)
-    # chunk.read() returns the content of a file as binary
+
+    try:
+        int_index = int(index)
+        # chunk.read() returns the content of a file as binary
+        utils.build_file(int_index, chunk.read())
+    except ValueError:
+        return _get_error_payload("Invalid arguments", 400)
 
     return jsonify(**response_payload), 200
+
+def _get_error_payload(payload, error_message, error_code):
+    payload["error"] = error_message
+    return jsonify(**payload), error_code
