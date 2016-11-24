@@ -2,9 +2,14 @@ package rsync.client.uploader;
 
 import org.apache.commons.codec.binary.Hex;
 
-import java.io.*;
-import java.security.*;
-import java.util.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 
 public class RsyncAnalyser {
 

@@ -1,6 +1,8 @@
 package rsync.client.uploader;
 
-import java.util.*;
+import java.util.AbstractMap;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Implementation of Mark Adler's checksum algorithm which enables rolling calculation
