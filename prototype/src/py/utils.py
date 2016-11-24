@@ -112,9 +112,15 @@ def build_partial_file(img_path,
     rolling_checksums = [int(chksum) for chksum in
         open(rolling_chksum_filename, 'rb').read().splitlines()]
     md5_checksums = open(md5_chksum_filename, 'rb').read().splitlines()
-    print rolling_checksums
-    print md5_checksums
+    print "Rolling: {}".format(rolling_checksums)
+    print "MD5: {}".format(md5_checksums)
+
+    # `output_wf` is used by `pseudosend` in Java side.
+    # `output_copy_wf` is used by `send` (using HTTP to send data)
+    # and it has zero-filled blocks.
     output_wf = open(output_filename,'w')
+    output_copy_wf = open('out/copy_partial.jpeg', 'w')
+
     with open(img_path, 'rb') as f:
         byte = f.read(BLOCK_SIZE)
         while byte != "":
@@ -125,8 +131,15 @@ def build_partial_file(img_path,
             assert not ((rolling_checksum in rolling_checksums) ^ (md5_checksum in md5_checksums))
             if (rolling_checksum in rolling_checksums) and (md5_checksum in md5_checksums):
                 output_wf.write(byte)
+                output_copy_wf.write(byte)
                 in_mem_copy.append(byte)
+            else:
+                zero_bytes = bytearray(BLOCK_SIZE)
+                output_copy_wf.write(zero_bytes)
             # Read next byte
             byte = f.read(BLOCK_SIZE)
+
+    output_wf.close()
+    output_copy_wf.close()
     return in_mem_copy
 
