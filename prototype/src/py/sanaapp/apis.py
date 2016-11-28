@@ -3,6 +3,22 @@ from core import utils
 
 from flask import jsonify, request
 
+@app.route("/request/checksums", methods=["POST"])
+def return_checksums():
+    response_payload = {}
+
+    file_name = request.form.get("name")
+    file_size = request.form.get("size", type = int)
+    if file_name is None or file_size is None:
+        return _get_error_payload("Invalid arguments", 400)
+
+    app.logger.info("Getting checksums for {} with size {}".format(file_name, file_size))
+    
+    rolling, md5 = utils.get_checksums(file_name, file_size)
+    response_payload["rolling"] = rolling
+    response_payload["md5"] = md5
+    return jsonify(**response_payload), 200
+
 @app.route("/upload/instructions", methods=["POST"])
 def receive_instruction():
     response_payload = {}
