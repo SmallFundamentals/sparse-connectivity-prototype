@@ -51,7 +51,7 @@ def _write_block(index, chunk_data, local_filename):
     It assumes that the partial file has been correctly built
     and its missing data is represented as zero-filled blocks.
     """
-    if os.path.isfile(local_filename):
+    if not os.path.isfile(local_filename):
         app.logger.info("{} doesn't exist".format(local_filename))
         return
 

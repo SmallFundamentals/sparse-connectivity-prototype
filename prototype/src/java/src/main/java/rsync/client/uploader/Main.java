@@ -69,13 +69,6 @@ public class Main {
         List<Object> instructions = analyser.generate(rolling, md5, 1024, 1024);
         pseudosend(instructions);
         send(instructions);
-
-        // If both checksums are empty, it means that we're trying to send a file for the first time.
-        // The server creates a zero-filled file in such case.
-        System.out.println("Getting checksums from the server");
-        ChecksumResult checksumResult = getChecksums();
-        System.out.println(checksumResult.getRolling());
-        System.out.println(checksumResult.getMd5());
     }
 
     private static ChecksumResult getChecksums() {
@@ -236,14 +229,14 @@ public class Main {
     }
 
     private static class ChecksumResult {
-        private List<String> rolling;
+        private List<Long> rolling;
         private List<String> md5;
 
-        public List<String> getRolling() {
+        public List<Long> getRolling() {
             return this.rolling;
         }
 
-        public void setRolling(ArrayList<String> rolling) {
+        public void setRolling(ArrayList<Long> rolling) {
             this.rolling = rolling;
         }
 
