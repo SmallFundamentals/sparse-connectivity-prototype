@@ -20,16 +20,23 @@ import java.util.List;
 
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
+import org.apache.http.NameValuePair;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.entity.UrlEncodedFormEntity;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.ContentType;
 import org.apache.http.entity.mime.MultipartEntityBuilder;
 import org.apache.http.entity.mime.HttpMultipartMode;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicNameValuePair;
 import org.apache.http.util.EntityUtils;
+
+import com.google.gson.Gson;
 
 public class Main {
 
+    private final static String TEST_FILE_NAME = "test.img";
+    private final static String GET_CHECKSUMS_URL = "http://localhost:5000/request/checksums";
     private final static String UPLOAD_INSTRUCTION_URL = "http://localhost:5000/upload/instructions";
 
     public final static String UPLOAD_FILENAME = "../../assets/sm_img.jpeg";
@@ -64,14 +71,35 @@ public class Main {
         send(instructions);
     }
 
+    private static ChecksumResult getChecksums() {
+        File file = new File(UPLOAD_FILENAME);
+        long fileSize = file.length();
+
+        HttpClient httpClient = HttpClientBuilder.create().build();
+        HttpPost post = new HttpPost(GET_CHECKSUMS_URL);
+
+        // TODO: Use a real file name
+        List<NameValuePair> params = new ArrayList<>();
+        params.add(new BasicNameValuePair("name", TEST_FILE_NAME));
+        params.add(new BasicNameValuePair("size", String.valueOf(fileSize)));
+
+        ChecksumResult result = null;
+        try {
+            post.setEntity(new UrlEncodedFormEntity(params));
+            HttpResponse response = httpClient.execute(post);
+            String jsonString = EntityUtils.toString(response.getEntity());
+            result = new Gson().fromJson(jsonString, ChecksumResult.class);
+        } catch (IOException ex) {
+            System.out.println(ex);
+        }
+        return result;
+    }
+
     /**
      * Extract data from instructions and send it via POST request.
      * @param instructions
      */
     private static void send(List<Object> instructions) {
-        // TODO: Use a real file name
-        final String fileName = "test.img";
-
         for (int i = 0; i < instructions.size(); i++) {
             if (instructions.get(i) instanceof ArrayList) {
                 // Raw byte data
@@ -80,7 +108,8 @@ public class Main {
                 byte[] rawBytes = getRawBytes(bytes, true);
 
                 System.out.println(String.format("Sending block #%d, size = %d", i, data.size()));
-                sendBinary(fileName, i, rawBytes);
+                // TODO: Use a real file name
+                sendBinary(TEST_FILE_NAME, i, rawBytes);
             }
         }
     }
@@ -196,6 +225,27 @@ public class Main {
             return raw;
         } else {
             return getRawBytes(data);
+        }
+    }
+
+    private static class ChecksumResult {
+        private List<Long> rolling;
+        private List<String> md5;
+
+        public List<Long> getRolling() {
+            return this.rolling;
+        }
+
+        public void setRolling(ArrayList<Long> rolling) {
+            this.rolling = rolling;
+        }
+
+        public List<String> getMd5() {
+            return this.md5;
+        }
+
+        public void setMd5(ArrayList<String> md5) {
+            this.md5 = md5;
         }
     }
 }
