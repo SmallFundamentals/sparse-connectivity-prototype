@@ -133,6 +133,7 @@ public class Main {
         builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
         builder.addBinaryBody("chunk", bytes, ContentType.DEFAULT_BINARY, fileName);
         builder.addTextBody("index", String.valueOf(index), ContentType.TEXT_PLAIN);
+        builder.addTextBody("name", fileName, ContentType.TEXT_PLAIN);
 
         HttpEntity entity = builder.build();
         post.setEntity(entity);

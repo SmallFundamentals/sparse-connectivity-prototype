@@ -25,8 +25,9 @@ def receive_instruction():
 
     # Extract binary data from (application/octet-stream)
     chunk = request.files["chunk"]
-    index = request.form.get("index", None)
-    if index is None or chunk is None:
+    index = request.form.get("index")
+    file_name = request.form.get("name")
+    if index is None or chunk is None or file_name is None:
         return _get_error_payload("Invalid arguments", 400)
 
     app.logger.info(index)
@@ -35,7 +36,7 @@ def receive_instruction():
     try:
         int_index = int(index)
         # chunk.read() returns the content of a file as binary
-        utils.build_file(int_index, chunk.read())
+        utils.build_file(int_index, chunk.read(), file_name)
     except ValueError:
         return _get_error_payload("Invalid arguments", 400)
 
