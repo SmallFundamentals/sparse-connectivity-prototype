@@ -37,25 +37,26 @@ def get_checksums(file_name, file_size):
 
 # TODO: This assumes that we already have a file that is partially built
 # (out/copy_partial.jpeg).
-def build_file(index, chunk_data, local_filename="out/copy_partial.jpeg"):
+def build_file(index, chunk_data, file_name="copy_partial.jpeg"):
     """
     Write data to the file based on the index of given data.
     """
-    app.logger.info("Writing data at index {} in {}".format(index, local_filename))
-    _write_block(index, chunk_data, local_filename)
+    local_file_name = "out/" + file_name
+    app.logger.info("Writing data at index {} in {}".format(index, local_file_name))
+    _write_block(index, chunk_data, local_file_name)
 
-def _write_block(index, chunk_data, local_filename):
+def _write_block(index, chunk_data, local_file_name):
     """
     Write data inside the local file at the given index.
 
     It assumes that the partial file has been correctly built
     and its missing data is represented as zero-filled blocks.
     """
-    if not os.path.isfile(local_filename):
-        app.logger.info("{} doesn't exist".format(local_filename))
+    if not os.path.isfile(local_file_name):
+        app.logger.info("{} doesn't exist".format(local_file_name))
         return
 
-    with open(local_filename, "r+b") as f:
+    with open(local_file_name, "r+b") as f:
         f.seek(index * BLOCK_SIZE)
         f.write(chunk_data)
 

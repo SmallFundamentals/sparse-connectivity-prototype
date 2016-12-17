@@ -35,7 +35,6 @@ import com.google.gson.Gson;
 
 public class Main {
 
-    private final static String TEST_FILE_NAME = "test.img";
     private final static String GET_CHECKSUMS_URL = "http://localhost:5000/request/checksums";
     private final static String UPLOAD_INSTRUCTION_URL = "http://localhost:5000/upload/instructions";
 
@@ -68,19 +67,25 @@ public class Main {
         List<String> md5 = getMD5ChecksumList(MD5_FILENAME);
         List<Object> instructions = analyser.generate(rolling, md5, 1024, 1024);
         pseudosend(instructions);
-        send(instructions);
     }
 
-    private static ChecksumResult getChecksums() {
-        File file = new File(UPLOAD_FILENAME);
+    /**
+     * Get rolling and md5 checksum from the server
+     * @param fileName
+     * @return ChecksumResult
+     */
+    public static ChecksumResult getChecksums(String fileName) throws FileNotFoundException {
+        File file = new File(fileName);
+        if (!file.exists()) {
+            throw new FileNotFoundException();
+        }
         long fileSize = file.length();
 
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpPost post = new HttpPost(GET_CHECKSUMS_URL);
 
-        // TODO: Use a real file name
         List<NameValuePair> params = new ArrayList<>();
-        params.add(new BasicNameValuePair("name", TEST_FILE_NAME));
+        params.add(new BasicNameValuePair("name", fileName));
         params.add(new BasicNameValuePair("size", String.valueOf(fileSize)));
 
         ChecksumResult result = null;
@@ -97,9 +102,10 @@ public class Main {
 
     /**
      * Extract data from instructions and send it via POST request.
+     * @param fileName
      * @param instructions
      */
-    private static void send(List<Object> instructions) {
+    public static void send(String fileName, List<Object> instructions) {
         for (int i = 0; i < instructions.size(); i++) {
             if (instructions.get(i) instanceof ArrayList) {
                 // Raw byte data
@@ -108,8 +114,7 @@ public class Main {
                 byte[] rawBytes = getRawBytes(bytes, true);
 
                 System.out.println(String.format("Sending block #%d, size = %d", i, data.size()));
-                // TODO: Use a real file name
-                sendBinary(TEST_FILE_NAME, i, rawBytes);
+                sendBinary(fileName, i, rawBytes);
             }
         }
     }
@@ -120,7 +125,7 @@ public class Main {
      * @param index
      * @param bytes
      */
-    private static void sendBinary(String fileName, int index, byte[] bytes) {
+    public static void sendBinary(String fileName, int index, byte[] bytes) {
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpPost post = new HttpPost(UPLOAD_INSTRUCTION_URL);
 
@@ -128,6 +133,7 @@ public class Main {
         builder.setMode(HttpMultipartMode.BROWSER_COMPATIBLE);
         builder.addBinaryBody("chunk", bytes, ContentType.DEFAULT_BINARY, fileName);
         builder.addTextBody("index", String.valueOf(index), ContentType.TEXT_PLAIN);
+        builder.addTextBody("name", fileName, ContentType.TEXT_PLAIN);
 
         HttpEntity entity = builder.build();
         post.setEntity(entity);
