@@ -16,8 +16,6 @@ public class RsyncAnalyser {
     private BufferedInputStream dataStream;
     private Adler32 adler;
     private MessageDigest md;
-    // TODO: Check that data can't contain -1
-    private final byte SEQUENCE_DELIMITER = 3;
 
     public RsyncAnalyser() throws NoSuchAlgorithmException {
         this.adler = new Adler32();
@@ -149,11 +147,13 @@ public class RsyncAnalyser {
             instrBuffer.addAll(blockBuffer);
         }
         if (instrBuffer.size() > 0) {
-            System.out.println(instrBuffer.size());
+            System.out.println(String.format("Last buffer size: %d", instrBuffer.size()));
             instructions.add(instrBuffer);
         }
 
+        System.out.println("--Instructions--");
         System.out.println(instructions);
+        System.out.println();
 
         return instructions;
     }

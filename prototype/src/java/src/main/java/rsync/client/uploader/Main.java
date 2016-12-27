@@ -39,9 +39,12 @@ public class Main {
     private final static String UPLOAD_INSTRUCTION_URL = "http://localhost:5000/upload/instructions";
 
     public final static String UPLOAD_FILENAME = "../../assets/sm_img.jpeg";
-    public final static int BLOCK_SIZE = 1024;
 
     public static void main(String[] args) throws IOException, NoSuchAlgorithmException, DigestException {
+        ChecksumResult cr = getChecksums("partial_1.jpeg");
+        System.out.println(cr.getMd5());
+        System.out.println(cr.getRolling());
+
         BufferedInputStream dataStream;
         try {
             dataStream = new BufferedInputStream(new FileInputStream(UPLOAD_FILENAME));
@@ -53,20 +56,11 @@ public class Main {
         RsyncAnalyser analyser = new RsyncAnalyser();
         analyser.update(dataStream);
 
-        String PARTIAL_1_ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_1_rolling.sum";
-        String PARTIAL_1_MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_1_md5.sum";
-        String PARTIAL_0_ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_0_rolling.sum";
-        String PARTIAL_0_MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/partial_0_md5.sum";
-        String ROLLING_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/sm_img_rolling.sum";
-        String MD5_CHECKSUM_FILENAME = "./src/test/java/rsync/client/uploader/assets/sm_img_md5.sum";
-
-        String ROLLING_FILENAME = PARTIAL_1_ROLLING_CHECKSUM_FILENAME;
-        String MD5_FILENAME = PARTIAL_1_MD5_CHECKSUM_FILENAME;
-
-        List<Long> rolling = getRollingChecksumList(ROLLING_FILENAME);
-        List<String> md5 = getMD5ChecksumList(MD5_FILENAME);
+        List<Long> rolling = cr.getRolling();
+        List<String> md5 = cr.getMd5();
         List<Object> instructions = analyser.generate(rolling, md5, 1024, 1024);
-        pseudosend(instructions);
+
+        send("partial_1.jpeg", instructions);
     }
 
     /**
@@ -75,11 +69,16 @@ public class Main {
      * @return ChecksumResult
      */
     public static ChecksumResult getChecksums(String fileName) throws FileNotFoundException {
+        // This is the client's version of the file
+        // TODO: clean this up a little bit so that it's easier to test.
+        /*
         File file = new File(fileName);
         if (!file.exists()) {
             throw new FileNotFoundException();
         }
         long fileSize = file.length();
+        */
+        long fileSize = 18897;
 
         HttpClient httpClient = HttpClientBuilder.create().build();
         HttpPost post = new HttpPost(GET_CHECKSUMS_URL);
@@ -111,7 +110,7 @@ public class Main {
                 // Raw byte data
                 List<Byte> data = (List<Byte>) instructions.get(i);
                 Byte[] bytes = data.toArray(new Byte[data.size()]);
-                byte[] rawBytes = getRawBytes(bytes, true);
+                byte[] rawBytes = getRawBytes(bytes);
 
                 System.out.println(String.format("Sending block #%d, size = %d", i, data.size()));
                 sendBinary(fileName, i, rawBytes);
@@ -154,23 +153,25 @@ public class Main {
      */
     private static void pseudosend(List<Object> instructions) throws IOException {
         // Write to python folder so that it's easy to test
-        Path file = Paths.get("../py/instr.out");
+        Path file = Paths.get("../py/in/instr.out");
         // Write an empty byte to clear the file
         Files.write(file, new byte[0]);
-        System.out.println(instructions);
+        System.out.println("Pseudo-sending by writing to file");
         try {
             for (int i = 0; i < instructions.size(); i++) {
                 if (instructions.get(i) instanceof ArrayList) {
                     // Raw byte data
                     List<Byte> data = (List<Byte>) instructions.get(i);
                     Byte[] bytes = data.toArray(new Byte[data.size()]);
-                    System.out.println(i);
+                    System.out.print("Raw data of size ");
                     System.out.println(data.size());
                     byte[] rawBytes = getRawBytes(bytes, true);
                     Files.write(file, rawBytes, StandardOpenOption.APPEND);
                 } else if (instructions.get(i) instanceof Integer) {
                     // Int
                     List<String> lines = Arrays.asList(Integer.toString((int) instructions.get(i)));
+                    System.out.print("Index ");
+                    System.out.println(instructions.get(i));
                     Files.write(file, lines, Charset.forName("UTF-8"), StandardOpenOption.APPEND);
                 }
             }
@@ -235,6 +236,7 @@ public class Main {
     }
 
     private static class ChecksumResult {
+
         private List<Long> rolling;
         private List<String> md5;
 

@@ -2,6 +2,7 @@
 .DS_Store
 prototype/src/py/*.sum
 *.class
+venv/
 
 prototype/out/
 
