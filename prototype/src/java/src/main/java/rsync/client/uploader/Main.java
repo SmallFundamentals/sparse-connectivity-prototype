@@ -105,6 +105,7 @@ public class Main {
      * @param instructions
      */
     public static void send(String fileName, List<Object> instructions) {
+        int idx = 0;
         for (int i = 0; i < instructions.size(); i++) {
             if (instructions.get(i) instanceof ArrayList) {
                 // Raw byte data
@@ -112,9 +113,13 @@ public class Main {
                 Byte[] bytes = data.toArray(new Byte[data.size()]);
                 byte[] rawBytes = getRawBytes(bytes);
 
-                System.out.println(String.format("Sending block #%d, size = %d", i, data.size()));
-                sendBinary(fileName, i, rawBytes);
+                System.out.println(String.format("Sending block #%d, size = %d", idx, data.size()));
+                sendBinary(fileName, idx, rawBytes);
+                idx += (data.size() / 1024);
+            } else {
+                idx++;
             }
+            System.out.println(idx);
         }
     }
 

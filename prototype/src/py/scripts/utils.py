@@ -117,6 +117,7 @@ def build_partial_file(img_path,
 
     output_wf = open(output_filename,'w')
 
+    counter = 0
     with open(img_path, 'rb') as f:
         byte = f.read(BLOCK_SIZE)
         while byte != "":
@@ -128,11 +129,14 @@ def build_partial_file(img_path,
             if (rolling_checksum in rolling_checksums) and (md5_checksum in md5_checksums):
                 output_wf.write(byte)
                 in_mem_copy.append(byte)
+                print counter
             else:
                 zero_bytes = bytearray(len(byte))
                 output_wf.write(zero_bytes)
+                print "zeroes"
             # Read next byte
             byte = f.read(BLOCK_SIZE)
+            counter += 1
 
     output_wf.close()
     return in_mem_copy
