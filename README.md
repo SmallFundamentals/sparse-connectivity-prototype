@@ -45,7 +45,7 @@ mvn test -Dtest=RsyncAnalyserTest
 mvn clean
 ```
 
-To run python code or python server:
+To run python code or python server:**
 ```shell
 make server (this runs the python code directly)
 
@@ -69,4 +69,36 @@ git fetch
 git rebase -i origin/master
 <fix any conflicts>
 git push
+```
+
+**Testing Workflow**
+
+For a new file, create a complete checksum first. Skip this step if you have a file's checksums already.
+```
+cd src/py/scripts
+python build_checksums.py <path>
+```
+This script creates a copy of its complete md5 & rolling checksums in `py/out` and  `src/java/src/test/java/rsync/client/uploader/assets/`. Use this as your basis to create test cases.
+
+Go to  `src/java/src/test/java/rsync/client/uploader/assets/` and create a copy of the complete checksums.
+Take out one more or lines of the checksums, making sure you take out the same lines from both checksum files, and name it something like partial_x_rolling.sum and partial_x_md5.sum. This simulates incomplete uploads of files.
+```
+cd src/java/src/test/java/rsync/client/uploader/assets/
+cp img_rolling.sum partial_x_rolling.sum
+cp img_md5.sum partial_x_md5.sum
+```
+
+Using this, create zero-filled partial files to simulate our server's state.
+```
+python build_partial.py <partial_x>
+```
+
+At this point, the test case has been built. (For missing data that doesn't cut-off at exactly a block cut-off point, we'll need another script to do that. For now, we can only build partial files based on checksums.)
+
+To through a test scenario, start the python server and then run the Java code.
+```
+<See above for starting python server>
+...
+(In a different tab)
+mvn exec:java -Dexec.mainClass=rsync.client.uploader.Main -DskipTests -Dexec.args="partial_x.jpeg"
 ```
