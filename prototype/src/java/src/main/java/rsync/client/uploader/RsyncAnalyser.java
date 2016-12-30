@@ -151,7 +151,7 @@ public class RsyncAnalyser {
             instructions.add(instrBuffer);
         }
 
-        System.out.println("--Instructions--");
+        System.out.println("-- Instructions --");
         System.out.println(instructions);
         System.out.println();
 
