@@ -1,5 +1,6 @@
 import hashlib
 import struct
+import shutil
 
 from constants import *
 
@@ -61,8 +62,8 @@ def build(instructions,
     return size
 
 def calc(img_path,
-         rolling_chksum_filename="out/py_rolling.sum",
-         md5_chksum_filename="out/py_md5.sum"):
+         rolling_chksum_filename=None,
+         md5_chksum_filename=None):
     """
     Given an image path, calculate the checksums for each block
     and write them to file.
@@ -70,6 +71,13 @@ def calc(img_path,
     Returns:
     An in-memory representation of the file.
     """
+    filename = img_path.split('/')[-1].split('.')[0]
+
+    if rolling_chksum_filename is None:
+        rolling_chksum_filename = "../out/{0}_rolling.sum".format(filename)
+    if md5_chksum_filename is None:
+        md5_chksum_filename = "../out/{0}_md5.sum".format(filename)
+
     in_mem_copy = []
     with open(img_path, 'rb') as f:
         rolling_wf = open(rolling_chksum_filename,'w')
@@ -86,6 +94,12 @@ def calc(img_path,
             md5_wf.write(md5_checksum + "\n")
             # Read next byte
             byte = f.read(BLOCK_SIZE)
+
+    java_rolling_filename = "../../java/src/test/java/rsync/client/uploader/assets/{0}_rolling.sum".format(filename)
+    java_md5_filename = "../../java/src/test/java/rsync/client/uploader/assets/{0}_md5.sum".format(filename)
+    shutil.copyfile(rolling_chksum_filename, java_rolling_filename)
+    shutil.copyfile(md5_chksum_filename, java_md5_filename)
+
     return in_mem_copy
 
 def get_blocks(img_path):
