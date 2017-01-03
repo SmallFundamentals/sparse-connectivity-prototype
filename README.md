@@ -88,7 +88,7 @@ cp img_rolling.sum partial_x_rolling.sum
 cp img_md5.sum partial_x_md5.sum
 ```
 
-Using this, create zero-filled partial files to simulate our server's state.
+Using this, create zero-filled partial files to simulate our server's state. The output will tell you the checksums received, and the building process. `zeroes` indicates a checksum missing, in which case a block of 0s will be used. An integer indicates that the block is matched. The output in general should conform to the test case that you created. e.g. if you delete the first three blocks, you should expect to see 3 `zeroes`, and then 3, 4, 5 etc. (since it is 0-indexed).
 ```
 python build_partial.py <partial_x> <original file path>
 ```
