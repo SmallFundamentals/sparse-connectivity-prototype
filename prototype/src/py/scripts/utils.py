@@ -95,10 +95,13 @@ def calc(img_path,
             # Read next byte
             byte = f.read(BLOCK_SIZE)
 
+        rolling_wf.close()
+        md5_wf.close()
+
     java_rolling_filename = "../../java/src/test/java/rsync/client/uploader/assets/{0}_rolling.sum".format(filename)
     java_md5_filename = "../../java/src/test/java/rsync/client/uploader/assets/{0}_md5.sum".format(filename)
-    shutil.copyfile(rolling_chksum_filename, java_rolling_filename)
-    shutil.copyfile(md5_chksum_filename, java_md5_filename)
+    shutil.copy(rolling_chksum_filename, java_rolling_filename)
+    shutil.copy(md5_chksum_filename, java_md5_filename)
 
     return in_mem_copy
 
