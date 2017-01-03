@@ -90,7 +90,7 @@ cp img_md5.sum partial_x_md5.sum
 
 Using this, create zero-filled partial files to simulate our server's state.
 ```
-python build_partial.py <partial_x>
+python build_partial.py <partial_x> <original file path>
 ```
 
 At this point, the test case has been built. (For missing data that doesn't cut-off at exactly a block cut-off point, we'll need another script to do that. For now, we can only build partial files based on checksums.)
@@ -100,5 +100,5 @@ To through a test scenario, start the python server and then run the Java code.
 <See above for starting python server>
 ...
 (In a different tab)
-mvn exec:java -Dexec.mainClass=rsync.client.uploader.Main -DskipTests -Dexec.args="partial_x.jpeg"
+mvn exec:java -Dexec.mainClass=rsync.client.uploader.Main -DskipTests -Dexec.args="partial_x.jpeg <original file path>"
 ```
