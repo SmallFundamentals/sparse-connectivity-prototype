@@ -103,3 +103,21 @@ To through a test scenario, start the python server and then run the Java code.
 (In a different tab)
 mvn exec:java -Dexec.mainClass=rsync.client.uploader.Main -DskipTests -Dexec.args="partial_x.jpeg <original file path>"
 ```
+
+**Testing Done**
+
+There are a few assumptions that have been made through testing:
+```
+- one way data transmission: from server to client only
+- partial data chunk is either transmitted or not transmitted at all. There would not be a case where one data chunk is partially transmitted
+- no case where server has more data than client
+```
+
+Here are the key areas that have been tested:
+
+```
+- single line partial sum deletion: beginning, end, in between
+- multiple line partial sum deletion in random places of the .sum file
+- empty file in server side (talked to Evan, where he said it would be handled by server)
+- no deletion
+```
